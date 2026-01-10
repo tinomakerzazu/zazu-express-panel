@@ -13,7 +13,8 @@ create table if not exists comprobantes_lima (
     operacion text,
     seguridad text,
     concepto text,
-    image_data text,
+    image_path text,
+    image_url text,
     created_at timestamptz default now()
 );
 
@@ -30,7 +31,8 @@ create table if not exists comprobantes_provincia (
     operacion text,
     seguridad text,
     concepto text,
-    image_data text,
+    image_path text,
+    image_url text,
     created_at timestamptz default now()
 );
 
@@ -42,7 +44,8 @@ create table if not exists comprobantes_caja (
     fecha date,
     hora time,
     concepto text,
-    image_data text,
+    image_path text,
+    image_url text,
     created_at timestamptz default now()
 );
 
@@ -85,3 +88,10 @@ create policy "public insert comprobantes caja"
 create policy "public delete comprobantes caja"
     on comprobantes_caja for delete
     using (true);
+
+alter table comprobantes_lima add column if not exists image_path text;
+alter table comprobantes_lima add column if not exists image_url text;
+alter table comprobantes_provincia add column if not exists image_path text;
+alter table comprobantes_provincia add column if not exists image_url text;
+alter table comprobantes_caja add column if not exists image_path text;
+alter table comprobantes_caja add column if not exists image_url text;

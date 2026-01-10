@@ -36,7 +36,7 @@ function mapSupabaseRow(row) {
         operacion: row.operacion || '',
         seguridad: row.seguridad || '',
         concepto: row.concepto || '',
-        imageData: row.image_data || '',
+        imageData: row.image_url || row.image_data || '',
         createdAt: row.created_at || ''
     };
 }

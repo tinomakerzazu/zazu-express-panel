@@ -83,7 +83,7 @@ function mapSupabaseRow(row) {
         operacion: row.operacion || '',
         seguridad: row.seguridad || '',
         concepto: row.concepto || '',
-        imageData: row.image_data || '',
+        imageData: row.image_url || row.image_data || '',
         createdAt: row.created_at || ''
     };
 }
@@ -133,7 +133,7 @@ function getStorageKey(formId) {
     return 'quickReceipts';
 }
 
-async function saveQuickReceipt(form, imageData) {
+async function saveQuickReceipt(form, imageMeta) {
     const formId = form.getAttribute('id') || '';
     const zone = getZoneFromFormId(formId);
     const key = getStorageKey(formId);
@@ -141,6 +141,9 @@ async function saveQuickReceipt(form, imageData) {
     if (horaField) {
         horaField.value = new Date().toTimeString().slice(0, 5);
     }
+    const imageData = imageMeta && imageMeta.imageData ? imageMeta.imageData : '';
+    const imagePath = imageMeta && imageMeta.imagePath ? imageMeta.imagePath : '';
+    const imageUrl = imageMeta && imageMeta.imageUrl ? imageMeta.imageUrl : '';
     const payload = {
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
         numero: form.querySelector('[name="numero"]')?.value || '',
@@ -156,7 +159,7 @@ async function saveQuickReceipt(form, imageData) {
         operacion: form.querySelector('[name="operacion"]')?.value || '',
         seguridad: form.querySelector('[name="seguridad"]')?.value || '',
         concepto: form.querySelector('[name="concepto"]')?.value || '',
-        imageData: imageData || '',
+        imageData: imageUrl || imageData || '',
         createdAt: new Date().toISOString()
     };
     const supabasePayload = {
@@ -173,7 +176,8 @@ async function saveQuickReceipt(form, imageData) {
         operacion: payload.operacion || null,
         seguridad: payload.seguridad || null,
         concepto: payload.concepto || null,
-        image_data: payload.imageData || null
+        image_path: imagePath || null,
+        image_url: imageUrl || null
     };
     const stored = await insertSupabaseReceipt(zone, supabasePayload);
     if (stored) {
@@ -527,8 +531,8 @@ function bindQuickForms() {
             event.preventDefault();
             const fileInput = form.querySelector('input[type="file"]');
             const file = fileInput?.files?.[0];
-            const finishSave = async (imageData) => {
-                await saveQuickReceipt(form, imageData);
+            const finishSave = async (imageMeta) => {
+                await saveQuickReceipt(form, imageMeta);
                 const modal = form.closest('.modal');
                 if (modal && typeof closeModal === 'function') {
                     closeModal(modal.id);
@@ -548,11 +552,10 @@ function bindQuickForms() {
                 window.dispatchEvent(new CustomEvent('quickReceiptsUpdated'));
             };
             if (file) {
-                const reader = new FileReader();
-                reader.onload = () => finishSave(reader.result);
-                reader.readAsDataURL(file);
+                const imageMeta = await handleReceiptImage(file);
+                await finishSave(imageMeta);
             } else {
-                await finishSave('');
+                await finishSave({ imageData: '' });
             }
         });
     });
@@ -588,6 +591,79 @@ function bindImagePreviews() {
             reader.readAsDataURL(file);
         });
     });
+}
+
+function getStorageBucket() {
+    return 'comprobantes';
+}
+
+function fileToDataUrl(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result || '');
+        reader.readAsDataURL(file);
+    });
+}
+
+function compressImage(file, maxWidth = 1200, quality = 0.7) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const reader = new FileReader();
+        reader.onload = () => {
+            img.onload = () => {
+                const scale = Math.min(1, maxWidth / img.width);
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                }
+                canvas.toBlob(
+                    (blob) => {
+                        resolve(blob || file);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function uploadToSupabaseStorage(file) {
+    const client = getSupabaseClient();
+    if (!client) return null;
+    const bucket = getStorageBucket();
+    const compressed = await compressImage(file);
+    const extension = 'jpg';
+    const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
+    const filePath = `comprobantes/${fileName}`;
+    const { error } = await client.storage
+        .from(bucket)
+        .upload(filePath, compressed, { upsert: false, contentType: 'image/jpeg' });
+    if (error) return null;
+    const publicUrl = client.storage.from(bucket).getPublicUrl(filePath)?.data?.publicUrl || '';
+    return {
+        imagePath: filePath,
+        imageUrl: publicUrl
+    };
+}
+
+async function handleReceiptImage(file) {
+    const uploaded = await uploadToSupabaseStorage(file);
+    if (uploaded && uploaded.imageUrl) {
+        return {
+            imagePath: uploaded.imagePath,
+            imageUrl: uploaded.imageUrl,
+            imageData: uploaded.imageUrl
+        };
+    }
+    const compressed = await compressImage(file);
+    const imageData = await fileToDataUrl(compressed);
+    return { imageData };
 }
 
 function applyDemoOCR(form) {
