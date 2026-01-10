@@ -1,0 +1,333 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Corporación</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="app-shell page-reportes">
+    <nav class="navbar">
+                        <a class="navbar-brand" href="index.html">
+            <img class="brand-icon-img" src="assets/ethereum.svg" alt="Ethereum">
+            <span class="brand-name">Gestion de Gastos</span>
+        </a>
+        <div class="navbar-quick">
+            <a class="navbar-quick-link" href="lima.html">
+                <i class="bi bi-geo-alt"></i>
+                <span>Zona Lima</span>
+            </a>
+            <a class="navbar-quick-link" href="provincia.html">
+                <i class="bi bi-compass"></i>
+                <span>Zona Provincia</span>
+            </a>
+            <a class="navbar-quick-link" href="caja-efectivo.html">
+                <i class="bi bi-cash-coin"></i>
+                <span>Caja efectivo</span>
+            </a>
+            <a class="navbar-quick-link" href="reportes.html">
+                <i class="bi bi-bar-chart"></i>
+                <span>Reportes</span>
+            </a>
+            <a class="navbar-quick-link" href="reportes-avanzados.html">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Reportes avanzados</span>
+            </a>
+            <a class="navbar-quick-link" href="configuracion.html">
+                <i class="bi bi-gear"></i>
+                <span>Configuracion</span>
+            </a>
+            <a class="navbar-quick-link" href="admin.html">
+                <i class="bi bi-speedometer2"></i>
+                <span>Admin dashboard</span>
+            </a>
+        </div>
+        <div class="navbar-menu">
+            <span class="user-info">
+                <i class="bi bi-person-circle"></i>
+                <span id="userName">Usuario</span>
+            </span>
+            <button onclick="logout()" class="btn btn-secondary btn-sm" type="button">
+                <i class="bi bi-box-arrow-right"></i> Salir
+            </button>
+        </div>
+    </nav>
+
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="container-app">
+        <aside class="sidebar" id="sidebar">
+                                                            <ul class="menu">
+                <li class="menu-section">
+                    <div class="menu-title">Operaciones</div>
+                </li>
+                <li class="menu-item">
+                    <details class="menu-dropdown">
+                        <summary class="menu-link">
+                            <span class="menu-icon"><i class="bi bi-geo-alt"></i></span>
+                            <span class="menu-text">Zonas L-P</span>
+                            <span class="menu-caret"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="menu-submenu">
+                            <a class="menu-sublink" href="lima.html">
+                                <i class="bi bi-geo"></i>
+                                Zona Lima
+                            </a>
+                            <a class="menu-sublink" href="provincia.html">
+                                <i class="bi bi-compass"></i>
+                                Zona Provincia
+                            </a>
+                        </div>
+                    </details>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="caja-efectivo.html">
+                        <span class="menu-icon"><i class="bi bi-cash-coin"></i></span>
+                        <span class="menu-text">Caja efectivo</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="index.html">
+                        <span class="menu-icon"><i class="bi bi-house"></i></span>
+                        <span class="menu-text">Graficos generales</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link active" href="reportes.html">
+                        <span class="menu-icon"><i class="bi bi-bar-chart"></i></span>
+                        <span class="menu-text">Reportes</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="reportes-avanzados.html">
+                        <span class="menu-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                        <span class="menu-text">Reportes avanzados</span>
+                    </a>
+                </li>
+                <li class="menu-section">
+                    <div class="menu-title">Gestion</div>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="admin.html">
+                        <span class="menu-icon"><i class="bi bi-speedometer2"></i></span>
+                        <span class="menu-text">Admin dashboard</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="configuracion.html">
+                        <span class="menu-icon"><i class="bi bi-sliders2"></i></span>
+                        <span class="menu-text">Configuracion</span>
+                    </a>
+                </li>
+            </ul>
+
+
+
+        </aside>
+
+        <main class="main-content">
+<section class="hero-block" id="resumen">
+                <div class="hero-copy">
+                    <p class="eyebrow">Centro de reportes</p>
+                    <h1 class="hero-title"><i class="bi bi-bar-chart"></i> Reportes</h1>
+                    <p class="hero-subtitle">
+                        Resumen financiero, comportamiento de pagos y métricas clave del negocio.
+                    </p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" id="exportCsvBtn" type="button">
+                            <i class="bi bi-download"></i> Exportar CSV
+                        </button>
+                        <button class="btn btn-secondary" id="downloadResumenBtn" type="button">
+                            <i class="bi bi-file-earmark-text"></i> Descargar resumen
+                        </button>
+                    </div>
+                    <div class="hero-tags">
+                        <span class="tag" id="reportUpdatedTag">Actualizado hoy</span>
+                        <span class="tag tag-outline" id="reportTotalTag">Total: S/ 0.00</span>
+                        <span class="tag tag-outline" id="reportPaymentsTag">0 comprobantes</span>
+                    </div>
+                </div>
+                <div class="hero-panel">
+                    <div class="panel-header">
+                        <h3>Resumen rápido</h3>
+                        <span class="panel-chip" id="reportRangeLabel">Últimos 30 días</span>
+                    </div>
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <p>Total movimientos</p>
+                            <h2 id="kpiTotalCobrado">S/ 0.00</h2>
+                            <span class="kpi-change positive" id="kpiCobradoChange">+0%</span>
+                        </div>
+                        <div class="kpi-card">
+                            <p>Comprobantes registrados</p>
+                            <h2 id="kpiPagosCount">0</h2>
+                            <span class="kpi-change" id="kpiPagosRange">Últimos 30 días</span>
+                        </div>
+                        <div class="kpi-card">
+                            <p>Ticket promedio</p>
+                            <h2 id="kpiTicketPromedio">S/ 0.00</h2>
+                            <span class="kpi-change" id="kpiTicketTag">Meta S/ 250</span>
+                        </div>
+                        <div class="kpi-card">
+                            <p>Clientes activos</p>
+                            <h2 id="kpiClientesActivos">0</h2>
+                            <span class="kpi-change" id="kpiClientesTag">Con pagos recientes</span>
+                        </div>
+                    </div>
+                    <div class="mini-chart">
+                        <div class="chart-header">
+                            <h4>Flujo mensual</h4>
+                            <span id="monthlyTotalLabel">S/ 0.00</span>
+                        </div>
+                        <div class="spark-bars" id="monthlyChart"></div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="stats-grid receipts-stats">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon"><i class="bi bi-file-earmark-text"></i></div>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="kpiComprobantesTotal">0</h3>
+                        <p>Comprobantes cargados</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="kpiIngresosTotal">S/ 0.00</h3>
+                        <p>Ingresos</p>
+                        <div class="stat-trend">
+                            <i class="bi bi-dot"></i>
+                            <span id="kpiIngresosHint">Incluye movimientos sin tipo</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon"><i class="bi bi-graph-down-arrow"></i></div>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="kpiGastosTotal">S/ 0.00</h3>
+                        <p>Gastos</p>
+                        <div class="stat-trend" style="background: rgba(241, 196, 15, 0.1); color: #f1c40f;">
+                            <i class="bi bi-dot"></i>
+                            <span id="kpiGastosHint">Sin clasificar</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+<section class="card filter-panel" id="filtros">
+                <div class="card-header">
+                    <h3><i class="bi bi-funnel"></i> Filtros de reporte</h3>
+                </div>
+                <div class="card-body">
+                    <div class="filters-row report-filter-grid">
+                        <div class="form-group">
+                            <label for="reportStartDate">Desde</label>
+                            <input type="date" id="reportStartDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="reportEndDate">Hasta</label>
+                            <input type="date" id="reportEndDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="reportMetodo">Método</label>
+                            <select id="reportMetodo" class="form-control">
+                                <option value="">Todos</option>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                                <option value="Yape/Plin">Yape/Plin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reportEstado">Estado</label>
+                            <select id="reportEstado" class="form-control">
+                                <option value="">Todos</option>
+                                <option value="Registrado">Registrado</option>
+                                <option value="Aplicado">Aplicado</option>
+                                <option value="Observado">Observado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" id="generateReportBtn" type="button">
+                            <i class="bi bi-lightning-charge"></i> Generar reporte
+                        </button>
+                        <button class="btn btn-secondary" id="clearReportFiltersBtn" type="button">
+                            <i class="bi bi-arrow-counterclockwise"></i> Limpiar filtros
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="reportes-grid" id="insights">
+                <div class="card panel-card">
+                    <div class="card-header">
+                        <h3><i class="bi bi-graph-up"></i> Distribución por método</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="meter-list" id="metodoList"></div>
+                    </div>
+                </div>
+                <div class="card panel-card">
+                    <div class="card-header">
+                        <h3><i class="bi bi-person-check"></i> Top clientes</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group" id="topClientesList"></div>
+                    </div>
+                </div>
+                <div class="card panel-card">
+                    <div class="card-header">
+                        <h3><i class="bi bi-bell"></i> Insights</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group" id="reportInsights"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" id="ultimos">
+                <div class="card-header">
+                        <h3><i class="bi bi-clock-history"></i> Últimos pagos</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Proveedor</th>
+                                <th>Método</th>
+                                <th>Referencia</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportPagosBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No hay comprobantes registrados</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/reportes.js"></script>
+</body>
+</html>

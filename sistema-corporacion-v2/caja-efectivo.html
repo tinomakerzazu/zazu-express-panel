@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caja Efectivo - Zazu Express</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="app-shell receipts-shell">
+    <nav class="navbar">
+                        <a class="navbar-brand" href="index.html">
+            <img class="brand-icon-img" src="assets/ethereum.svg" alt="Ethereum">
+            <span class="brand-name">Gestion de Gastos</span>
+        </a>
+        <div class="navbar-quick">
+            <a class="navbar-quick-link" href="lima.html">
+                <i class="bi bi-geo-alt"></i>
+                <span>Zona Lima</span>
+            </a>
+            <a class="navbar-quick-link" href="provincia.html">
+                <i class="bi bi-compass"></i>
+                <span>Zona Provincia</span>
+            </a>
+            <a class="navbar-quick-link" href="caja-efectivo.html">
+                <i class="bi bi-cash-coin"></i>
+                <span>Caja efectivo</span>
+            </a>
+            <a class="navbar-quick-link" href="reportes.html">
+                <i class="bi bi-bar-chart"></i>
+                <span>Reportes</span>
+            </a>
+            <a class="navbar-quick-link" href="reportes-avanzados.html">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Reportes avanzados</span>
+            </a>
+            <a class="navbar-quick-link" href="configuracion.html">
+                <i class="bi bi-gear"></i>
+                <span>Configuracion</span>
+            </a>
+            <a class="navbar-quick-link" href="admin.html">
+                <i class="bi bi-speedometer2"></i>
+                <span>Admin dashboard</span>
+            </a>
+        </div>
+        <div class="navbar-menu">
+            <button class="btn btn-secondary btn-sm" type="button">
+                <i class="bi bi-bell"></i>
+                Alertas
+            </button>
+            <button onclick="logout()" class="btn btn-secondary btn-sm" type="button">
+                <i class="bi bi-box-arrow-right"></i>
+                Salir
+            </button>
+            <div class="user-info">
+                <i class="bi bi-person-circle"></i>
+                <div>
+                    <div id="userName">Usuario</div>
+                    <small class="text-muted">Caja efectivo</small>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-app receipts-app">
+        <aside class="sidebar">
+                                    <ul class="menu">
+                <li class="menu-section">
+                    <div class="menu-title">Operaciones</div>
+                </li>
+                <li class="menu-item">
+                    <details class="menu-dropdown">
+                        <summary class="menu-link">
+                            <span class="menu-icon"><i class="bi bi-geo-alt"></i></span>
+                            <span class="menu-text">Zonas L-P</span>
+                            <span class="menu-caret"><i class="bi bi-chevron-down"></i></span>
+                        </summary>
+                        <div class="menu-submenu">
+                            <a class="menu-sublink" href="lima.html">
+                                <i class="bi bi-geo"></i>
+                                Zona Lima
+                            </a>
+                            <a class="menu-sublink" href="provincia.html">
+                                <i class="bi bi-compass"></i>
+                                Zona Provincia
+                            </a>
+                        </div>
+                    </details>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link active" href="caja-efectivo.html">
+                        <span class="menu-icon"><i class="bi bi-cash-coin"></i></span>
+                        <span class="menu-text">Caja efectivo</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="index.html">
+                        <span class="menu-icon"><i class="bi bi-house"></i></span>
+                        <span class="menu-text">Graficos generales</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="reportes.html">
+                        <span class="menu-icon"><i class="bi bi-bar-chart"></i></span>
+                        <span class="menu-text">Reportes</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="reportes-avanzados.html">
+                        <span class="menu-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                        <span class="menu-text">Reportes avanzados</span>
+                    </a>
+                </li>
+                <li class="menu-section">
+                    <div class="menu-title">Gestion</div>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="admin.html">
+                        <span class="menu-icon"><i class="bi bi-speedometer2"></i></span>
+                        <span class="menu-text">Admin dashboard</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a class="menu-link " href="configuracion.html">
+                        <span class="menu-icon"><i class="bi bi-sliders2"></i></span>
+                        <span class="menu-text">Configuracion</span>
+                    </a>
+                </li>
+            </ul>
+
+        </aside>
+
+                <main class="main-content">
+            <section class="card framed-title">
+                <div class="card-body">
+                    <h1>Comprobantes Caja</h1>
+                </div>
+            </section>
+            <section class="card canvas-widgets">
+                <div class="card-body widget-grid">
+                    <div class="count-chart" data-zone="caja">
+                        <div class="count-chart-header">
+                            <h2>Conteo diario de comprobantes</h2>
+                            <span>Sin datos</span>
+                        </div>
+                        <div class="count-chart-grid" id="cajaChartLabels">
+                            <span>01</span>
+                            <span>02</span>
+                            <span>03</span>
+                            <span>04</span>
+                            <span>05</span>
+                            <span>06</span>
+                            <span>07</span>
+                        </div>
+                        <div class="count-chart-line" id="cajaChart">
+                            <svg viewBox="0 0 400 140" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="countFillCaja" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="rgba(109, 41, 50, 0.45)"/>
+                                        <stop offset="100%" stop-color="rgba(109, 41, 50, 0)"/>
+                                    </linearGradient>
+                                </defs>
+                                <path class="area" d=""></path>
+                                <path class="line" d=""></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-header">
+                            <div class="status-toggle" id="cajaStatusToggle">
+                                <button class="status-toggle-btn active" type="button" data-caja="CAJA - MOTORIZADOS">
+                                    Caja motorizados
+                                </button>
+                                <button class="status-toggle-btn" type="button" data-caja="CAJA - RECOJO EN TIENDA">
+                                    Caja recojo en tienda
+                                </button>
+                            </div>
+                            <span class="status-meta">Sin datos</span>
+                        </div>
+                        <strong>CAJA - REGISTROS</strong>
+                        <p>Controla ingresos y salidas en efectivo.</p>
+                        <div class="status-quick">
+                            <button class="quick-number-btn" type="button" data-quick-caja="CAJA - MOTORIZADOS" data-modal="cajaQuickModal">
+                                <span>Caja</span>
+                                CAJA - MOTORIZADOS
+                            </button>
+                            <button class="quick-number-btn" type="button" data-quick-caja="CAJA - RECOJO EN TIENDA" data-modal="cajaQuickModal">
+                                <span>Caja</span>
+                                CAJA - RECOJO EN TIENDA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="card receipts-table">
+                <div class="card-header">
+                    <h3><i class="bi bi-journal-text"></i> Comprobantes guardados</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-toolbar">
+                        <div class="table-filters">
+                            <input class="filter-input" type="text" placeholder="Buscar por concepto" data-zone="caja" data-filter="query">
+                            <select class="filter-select" data-zone="caja" data-filter="caja">
+                                <option value="">Caja</option>
+                                <option value="CAJA - MOTORIZADOS">CAJA - MOTORIZADOS</option>
+                                <option value="CAJA - RECOJO EN TIENDA">CAJA - RECOJO EN TIENDA</option>
+                            </select>
+                            <input class="filter-input" type="date" data-zone="caja" data-filter="fecha">
+                        </div>
+                        <div class="table-actions">
+                            <button class="btn btn-secondary btn-sm" type="button" data-export="excel" data-zone="caja">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> Excel
+                            </button>
+                            <button class="btn btn-secondary btn-sm" type="button" data-export="pdf" data-zone="caja">
+                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Caja</th>
+                                <th>Tipo</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Comprobante</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cajaQuickTableBody" data-zone="caja"></tbody>
+                    </table>
+                </div>
+            </section>
+            <div class="empty-canvas" aria-hidden="true"></div>
+        </main>
+    </div>
+
+
+    <div class="modal" id="cajaQuickModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="bi bi-cash-coin"></i> Nuevo comprobante de caja</h2>
+                <button class="close-btn" type="button" onclick="closeModal('cajaQuickModal')">x</button>
+            </div>
+            <div class="modal-body">
+                <form class="receipt-form quick-form" id="cajaQuickForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cajaQuickCaja">Caja</label>
+                            <select class="form-control" id="cajaQuickCaja" name="caja" required>
+                                <option>CAJA - MOTORIZADOS</option>
+                                <option>CAJA - RECOJO EN TIENDA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cajaQuickTipo">Tipo</label>
+                            <select class="form-control" id="cajaQuickTipo" name="tipo" required>
+                                <option>Ingreso</option>
+                                <option>Salida</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cajaQuickMonto">Monto (S/)</label>
+                            <input class="form-control" id="cajaQuickMonto" name="monto" type="number" step="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cajaQuickFecha">Fecha</label>
+                            <input class="form-control" id="cajaQuickFecha" name="fecha" type="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cajaQuickHora">Hora</label>
+                            <input class="form-control is-readonly" id="cajaQuickHora" name="hora" type="time" readonly required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cajaQuickConcepto">Concepto</label>
+                            <input class="form-control" id="cajaQuickConcepto" name="concepto" type="text" placeholder="Ej: movilidad, insumos" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cajaQuickComprobante">Comprobante (imagen)</label>
+                            <input class="form-control" id="cajaQuickComprobante" name="comprobante" type="file" accept="image/*">
+                            <div class="image-preview" id="cajaQuickPreview">
+                                <span>Sin imagen</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" type="button" onclick="closeModal('cajaQuickModal')">Cancelar</button>
+                        <button class="btn btn-primary" type="submit">Guardar comprobante</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/zone-quick-form.js"></script>
+</body>
+</html>

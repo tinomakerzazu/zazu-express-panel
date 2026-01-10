@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gestion de Gastos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="login-premium">
+    <div class="premium-shell">
+        <aside class="premium-aside">
+            <div class="premium-brand">
+                <span class="brand-mark">
+                    <img class="brand-icon-img" src="assets/ethereum.svg" alt="Ethereum">
+                </span>
+                <div class="brand-text">
+                    <span class="brand-name">Gestion de Gastos</span>
+                    <span class="brand-subtitle">Control interno</span>
+                </div>
+            </div>
+
+            <h1>Panel ejecutivo de comprobantes</h1>
+            <p>Control integral con data en tiempo real, alertas y cumplimiento automatizado.</p>
+
+            <div class="premium-badges">
+                <span><i class="bi bi-shield-check"></i> Cumplimiento</span>
+                <span><i class="bi bi-graph-up-arrow"></i> Analitica</span>
+                <span><i class="bi bi-lightning-charge"></i> Flujo continuo</span>
+            </div>
+
+            <div class="premium-indicators">
+                <div class="indicator-card">
+                    <span class="indicator-label">Comprobantes hoy</span>
+                    <strong>—</strong>
+                    <span class="indicator-meta">Sin datos</span>
+                </div>
+                <div class="indicator-card">
+                    <span class="indicator-label">Tiempo de cierre</span>
+                    <strong>—</strong>
+                    <span class="indicator-meta">Sin datos</span>
+                </div>
+                <div class="indicator-card">
+                    <span class="indicator-label">Rechazos</span>
+                    <strong>—</strong>
+                    <span class="indicator-meta">Sin datos</span>
+                </div>
+                <div class="indicator-card">
+                    <span class="indicator-label">Alertas activas</span>
+                    <strong>—</strong>
+                    <span class="indicator-meta">Sin datos</span>
+                </div>
+            </div>
+
+            <div class="premium-audit">
+                <div>
+                    <strong>Ultima auditoria</strong>
+                    <span>Hace 2 horas</span>
+                </div>
+                <div class="audit-status">
+                    <span class="status-dot"></span>
+                    Operativo
+                </div>
+            </div>
+
+            <div class="premium-highlight">
+                <div>
+                    <strong>Monitoreo 24/7</strong>
+                    <span>Alertas, trazabilidad y control.</span>
+                </div>
+                <i class="bi bi-eye"></i>
+            </div>
+        </aside>
+
+        <main class="premium-panel">
+            <div class="panel-header">
+                <span class="panel-kicker">Acceso corporativo</span>
+                <h2>Bienvenido de vuelta</h2>
+                <p>Ingresa con tu cuenta autorizada para continuar.</p>
+            </div>
+
+            <form id="loginForm" class="panel-form" novalidate>
+                <div class="form-group">
+                    <label for="username">Correo corporativo</label>
+                    <input class="form-control" id="username" type="text" placeholder="tu.correo@empresa.com" required autocomplete="username">
+                    <small class="field-error">Completa este campo</small>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contrasena</label>
+                    <input class="form-control" id="password" type="password" placeholder="********" required autocomplete="current-password">
+                    <small class="field-error">Completa este campo</small>
+                </div>
+                <div class="panel-row">
+                    <label class="remember-me">
+                        <input type="checkbox">
+                        Mantener sesion
+                    </label>
+                    <a class="forgot-link" href="#">Recuperar acceso</a>
+                </div>
+                <button class="panel-btn" type="submit">Ingresar al panel</button>
+            </form>
+
+            <div class="panel-divider">
+                <span>Acceso alternativo</span>
+            </div>
+
+            <div class="panel-security">
+                <div class="security-item">
+                    <i class="bi bi-shield-check"></i>
+                    <div>
+                        <strong>Acceso seguro</strong>
+                        <span>Proteccion de cuenta y sesiones.</span>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <i class="bi bi-clock-history"></i>
+                    <div>
+                        <strong>Historial trazable</strong>
+                        <span>Registro y auditoria automatica.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-providers">
+                <button type="button" onclick="loginWithProvider('google')">
+                    <i class="bi bi-google"></i>
+                    Acceder con Google
+                </button>
+                <button type="button" onclick="loginWithProvider('microsoft')">
+                    <i class="bi bi-microsoft"></i>
+                    Acceder con Microsoft
+                </button>
+                <button type="button" onclick="loginWithProvider('phone')">
+                    <i class="bi bi-phone"></i>
+                    Acceder con telefono
+                </button>
+            </div>
+
+            <div class="panel-footer">
+                Si no tienes acceso, solicita permisos al area de control interno.
+            </div>
+        </main>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>
