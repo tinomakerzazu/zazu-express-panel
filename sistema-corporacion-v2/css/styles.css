@@ -1446,6 +1446,27 @@ body {
     object-fit: cover;
 }
 
+.preview-cell {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.upload-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    background: rgba(199, 183, 163, 0.15);
+    color: #e8d8c4;
+    border: 1px solid rgba(199, 183, 163, 0.3);
+}
+
 .table-toolbar {
     display: flex;
     flex-wrap: wrap;

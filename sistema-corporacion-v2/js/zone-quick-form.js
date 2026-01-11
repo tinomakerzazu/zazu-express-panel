@@ -270,8 +270,9 @@ function renderQuickTable(zone, items, filteredItems) {
         const monto = item.monto ? `S/ ${parseFloat(item.monto || 0).toFixed(2)}` : '-';
         const operacion = item.operacion || '-';
         const destinatario = item.destinatario || '-';
+        const isRemote = typeof item.imageData === 'string' && item.imageData.startsWith('http');
         const preview = item.imageData
-            ? `<img class="preview-thumb" src="${item.imageData}" alt="Comprobante">`
+            ? `<div class="preview-cell"><img class="preview-thumb" src="${item.imageData}" alt="Comprobante">${isRemote ? '<span class="upload-badge">Supabase</span>' : ''}</div>`
             : '<span class="text-muted">Sin imagen</span>';
         const viewBtn = `<button class="btn btn-secondary btn-sm" type="button" data-preview="${item.imageData || ''}" ${item.imageData ? '' : 'disabled'}>Ver</button>`;
         const rowId = item.id || '';
