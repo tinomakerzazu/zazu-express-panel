@@ -1,9 +1,16 @@
 /* global supabase */
 function getSupabaseConfig() {
-    const url = localStorage.getItem('supabaseUrl') || '';
-    const key = localStorage.getItem('supabaseAnonKey') || '';
-    if (!url || !key) return null;
-    return { url, key };
+    const storedUrl = localStorage.getItem('supabaseUrl') || '';
+    const storedKey = localStorage.getItem('supabaseAnonKey') || '';
+    if (storedUrl && storedKey) return { url: storedUrl, key: storedKey };
+    const fallbackUrl = 'https://gpshetkaotreellwyicp.supabase.co';
+    const fallbackKey = 'sb_publishable_XSEyzsNLdPu98SB3OiaSLA_NqUNmlVj';
+    if (fallbackUrl && fallbackKey) {
+        localStorage.setItem('supabaseUrl', fallbackUrl);
+        localStorage.setItem('supabaseAnonKey', fallbackKey);
+        return { url: fallbackUrl, key: fallbackKey };
+    }
+    return null;
 }
 
 function initSupabaseClient() {
