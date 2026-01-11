@@ -666,44 +666,100 @@ async function handleReceiptImage(file) {
     return { imageData };
 }
 
-function applyDemoOCR(form) {
-    if (!form) return;
-    const now = new Date();
-    const dateValue = now.toISOString().slice(0, 10);
-    const timeValue = now.toTimeString().slice(0, 5);
-
-    const demo = {
-        monto: '75.00',
-        destinatario: 'Jessica Roj*',
-        operacion: '31932156',
-        seguridad: '156'
+function parseReceiptText(text) {
+    const data = {
+        monto: '',
+        fecha: '',
+        hora: '',
+        operacion: '',
+        seguridad: ''
     };
 
-    const setValue = (name, value) => {
-        const input = form.querySelector(`[name="${name}"]`);
-        if (input && !input.value) {
-            input.value = value;
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    };
+    const amountMatch = text.match(/S\/\s*([0-9]+[.,][0-9]{2})/i) || text.match(/\\b([0-9]+[.,][0-9]{2})\\b/);
+    if (amountMatch) data.monto = amountMatch[1].replace(',', '.');
 
-    setValue('monto', demo.monto);
-    setValue('destinatario', demo.destinatario);
-    setValue('operacion', demo.operacion);
-    setValue('seguridad', demo.seguridad);
-    setValue('fecha', dateValue);
-    setValue('hora', timeValue);
+    const dateMatch = text.match(/\\b(\\d{1,2})[\\/.\\-](\\d{1,2})[\\/.\\-](\\d{2,4})\\b/);
+    if (dateMatch) {
+        const day = dateMatch[1].padStart(2, '0');
+        const month = dateMatch[2].padStart(2, '0');
+        let year = dateMatch[3];
+        if (year.length === 2) year = `20${year}`;
+        data.fecha = `${year}-${month}-${day}`;
+    }
+
+    const timeMatch = text.match(/\\b(\\d{1,2}:\\d{2})\\b/);
+    if (timeMatch) data.hora = timeMatch[1];
+
+    const operMatch = text.match(/(?:operaci[oó]n|nro\\.? de operaci[oó]n|operacion)\\D*(\\d{6,})/i);
+    if (operMatch) data.operacion = operMatch[1];
+
+    const secMatch = text.match(/c[oó]digo de seguridad\\D*(\\d{3,6})/i);
+    if (secMatch) data.seguridad = secMatch[1];
+
+    return data;
 }
 
-function bindDemoOCRButtons() {
-    document.querySelectorAll('.ocr-demo-btn').forEach((button) => {
+function setIfEmpty(form, name, value) {
+    if (!value) return;
+    const input = form.querySelector(`[name="${name}"]`);
+    if (input && !input.value) {
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+function loadTesseract() {
+    if (window.Tesseract) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('No se pudo cargar OCR'));
+        document.head.appendChild(script);
+    });
+}
+
+async function applyOcr(form) {
+    if (!form) return;
+    const fileInput = form.querySelector('input[type="file"]');
+    const file = fileInput?.files?.[0];
+    if (!file) {
+        if (typeof showNotification === 'function') {
+            showNotification('Sube la imagen del comprobante primero', 'error');
+        }
+        return;
+    }
+
+    try {
+        if (typeof showNotification === 'function') {
+            showNotification('Leyendo comprobante...', 'info');
+        }
+        await loadTesseract();
+        const result = await window.Tesseract.recognize(file, 'spa+eng');
+        const text = result?.data?.text || '';
+        const parsed = parseReceiptText(text);
+        setIfEmpty(form, 'monto', parsed.monto);
+        setIfEmpty(form, 'fecha', parsed.fecha);
+        setIfEmpty(form, 'hora', parsed.hora);
+        setIfEmpty(form, 'operacion', parsed.operacion);
+        setIfEmpty(form, 'seguridad', parsed.seguridad);
+        if (typeof showNotification === 'function') {
+            showNotification('Lectura OCR aplicada', 'success');
+        }
+    } catch (error) {
+        console.error(error);
+        if (typeof showNotification === 'function') {
+            showNotification('No se pudo leer el comprobante', 'error');
+        }
+    }
+}
+
+function bindOcrButtons() {
+    document.querySelectorAll('.ocr-btn').forEach((button) => {
         button.addEventListener('click', () => {
             const formId = button.getAttribute('data-form');
             const form = document.getElementById(formId);
-            applyDemoOCR(form);
-            if (typeof showNotification === 'function') {
-                showNotification('Lectura demo aplicada', 'success');
-            }
+            applyOcr(form);
         });
     });
 }
@@ -712,7 +768,7 @@ async function initQuickForms() {
     bindQuickNumberButtons();
     bindQuickForms();
     bindImagePreviews();
-    bindDemoOCRButtons();
+    bindOcrButtons();
     bindTableFilters();
     bindExportButtons();
     bindTableActions();

@@ -1,4 +1,5 @@
-﻿const exportAdvancedReportBtn = document.getElementById('exportAdvancedReportBtn');
+const exportAdvancedReportBtn = document.getElementById('exportAdvancedReportBtn');
+const inconsistencyList = document.getElementById('inconsistencyList');
 
 function exportAdvancedReport() {
     const titulo = 'Reporte avanzado';
@@ -32,5 +33,76 @@ function exportAdvancedReport() {
 if (exportAdvancedReportBtn) {
     exportAdvancedReportBtn.addEventListener('click', exportAdvancedReport);
 }
+
+function normalizeNumber(value) {
+    if (value === null || value === undefined) return 0;
+    const cleaned = String(value).replace(',', '.').replace(/[^0-9.]/g, '');
+    const parsed = parseFloat(cleaned);
+    return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function buildInconsistencySummary(items, label) {
+    const summary = {
+        missingAmount: 0,
+        missingDate: 0,
+        missingImage: 0,
+        missingOperacion: 0,
+        missingConcepto: 0,
+        missingTipo: 0
+    };
+
+    items.forEach((item) => {
+        const monto = normalizeNumber(item.monto);
+        if (!monto) summary.missingAmount += 1;
+        if (!item.fecha || !item.hora) summary.missingDate += 1;
+        if (!item.imageData) summary.missingImage += 1;
+        if (item.metodo === 'Yape' && !item.operacion) summary.missingOperacion += 1;
+        if (label === 'Caja' && !item.concepto) summary.missingConcepto += 1;
+        if (label === 'Caja' && !item.tipo) summary.missingTipo += 1;
+    });
+    return { label, summary };
+}
+
+function renderInconsistencies() {
+    if (!inconsistencyList) return;
+    const lima = JSON.parse(localStorage.getItem('quickReceiptsLima') || '[]');
+    const provincia = JSON.parse(localStorage.getItem('quickReceiptsProvincia') || '[]');
+    const caja = JSON.parse(localStorage.getItem('quickReceiptsCaja') || '[]');
+
+    const summaries = [
+        buildInconsistencySummary(lima, 'Lima'),
+        buildInconsistencySummary(provincia, 'Provincia'),
+        buildInconsistencySummary(caja, 'Caja')
+    ];
+
+    const rows = [];
+    summaries.forEach((entry) => {
+        const { label, summary } = entry;
+        if (summary.missingAmount) rows.push(`${label}: ${summary.missingAmount} sin monto`);
+        if (summary.missingDate) rows.push(`${label}: ${summary.missingDate} sin fecha/hora`);
+        if (summary.missingImage) rows.push(`${label}: ${summary.missingImage} sin imagen`);
+        if (summary.missingOperacion) rows.push(`${label}: ${summary.missingOperacion} sin nro. de operacion`);
+        if (summary.missingConcepto) rows.push(`${label}: ${summary.missingConcepto} sin concepto`);
+        if (summary.missingTipo) rows.push(`${label}: ${summary.missingTipo} sin tipo`);
+    });
+
+    if (!rows.length) {
+        inconsistencyList.innerHTML = '<div class="list-item text-center text-muted">Sin alertas detectadas</div>';
+        return;
+    }
+    inconsistencyList.innerHTML = rows.slice(0, 6).map((item) => `<div class="list-item">${item}</div>`).join('');
+}
+
+function bindInconsistencyUpdates() {
+    renderInconsistencies();
+    window.addEventListener('storage', (event) => {
+        if (event && event.key && event.key.startsWith('quickReceipts')) {
+            renderInconsistencies();
+        }
+    });
+    window.addEventListener('quickReceiptsUpdated', renderInconsistencies);
+}
+
+bindInconsistencyUpdates();
 
 window.exportAdvancedReport = exportAdvancedReport;
