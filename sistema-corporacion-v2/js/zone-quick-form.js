@@ -678,29 +678,47 @@ function parseReceiptText(text) {
         fecha: '',
         hora: '',
         operacion: '',
-        seguridad: ''
+        seguridad: '',
+        destinatario: '',
+        celular: ''
     };
 
-    const amountMatch = text.match(/S\/\s*([0-9]+[.,][0-9]{2})/i) || text.match(/\\b([0-9]+[.,][0-9]{2})\\b/);
+    const amountMatch = text.match(/S\/\s*([0-9]+[.,][0-9]{2})/i) || text.match(/\b([0-9]+[.,][0-9]{2})\b/);
     if (amountMatch) data.monto = amountMatch[1].replace(',', '.');
 
-    const dateMatch = text.match(/\\b(\\d{1,2})[\\/.\\-](\\d{1,2})[\\/.\\-](\\d{2,4})\\b/);
+    const dateMatch = text.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/);
     if (dateMatch) {
         const day = dateMatch[1].padStart(2, '0');
         const month = dateMatch[2].padStart(2, '0');
         let year = dateMatch[3];
-        if (year.length === 2) year = `20${year}`;
+        if (year.length == 2) year = `20${year}`;
         data.fecha = `${year}-${month}-${day}`;
     }
 
-    const timeMatch = text.match(/\\b(\\d{1,2}:\\d{2})\\b/);
+    const timeMatch = text.match(/\b(\d{1,2}:\d{2})\b/);
     if (timeMatch) data.hora = timeMatch[1];
 
-    const operMatch = text.match(/(?:operaci[oó]n|nro\\.? de operaci[oó]n|operacion)\\D*(\\d{6,})/i);
+    const operMatch = text.match(/(?:operaci[oó]n|nro\.? de operaci[oó]n|operacion)\D*(\d{6,})/i);
     if (operMatch) data.operacion = operMatch[1];
 
-    const secMatch = text.match(/c[oó]digo de seguridad\\D*(\\d{3,6})/i);
+    const secMatch = text.match(/c[oó]digo de seguridad\D*(\d{3,6})/i);
     if (secMatch) data.seguridad = secMatch[1];
+
+    const celMatch = text.match(/(?:nro\.?\s*de\s*celular|numero\s*de\s*celular|celular)\D*([0-9]{3}\s*[0-9]{3}\s*[0-9]{3})/i);
+    if (celMatch) data.celular = celMatch[1].replace(/\s+/g, '');
+
+    const lines = text
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 2);
+    const banned = ['yape', 'yapeaste', 'codigo', 'seguridad', 'operacion', 'destino', 'celular', 'fecha', 'hora'];
+    const nameLine = lines.find((line) => {
+        const lower = line.toLowerCase();
+        if (banned.some((word) => lower.includes(word))) return false;
+        if (/[0-9]/.test(line)) return false;
+        return line.split(' ').length >= 2;
+    });
+    if (nameLine) data.destinatario = nameLine;
 
     return data;
 }
@@ -749,6 +767,8 @@ async function applyOcr(form) {
         setIfEmpty(form, 'hora', parsed.hora);
         setIfEmpty(form, 'operacion', parsed.operacion);
         setIfEmpty(form, 'seguridad', parsed.seguridad);
+        setIfEmpty(form, 'destinatario', parsed.destinatario);
+        setIfEmpty(form, 'celular', parsed.celular);
         if (typeof showNotification === 'function') {
             showNotification('Lectura OCR aplicada', 'success');
         }

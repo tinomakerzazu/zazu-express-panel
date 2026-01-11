@@ -1,9 +1,19 @@
 function loginWithProvider(provider) {
-    alert(`Funcion "${provider}" en desarrollo.\n\nPor ahora usa el login tradicional:\nUsuario: ruben@corp.com\nContrasena: 0110309`);
+    alert(`Funcion "${provider}" en desarrollo.\n\nUsa el login con correo y contraseña.`);
 }
 
-if (sessionStorage.getItem('isLoggedIn')) {
-    window.location.href = 'index.html';
+async function redirectIfLogged() {
+    const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
+    if (client) {
+        const { data } = await client.auth.getSession();
+        if (data && data.session) {
+            window.location.href = 'index.html';
+            return;
+        }
+    }
+    if (sessionStorage.getItem('isLoggedIn')) {
+        window.location.href = 'index.html';
+    }
 }
 
 const loginForm = document.getElementById('loginForm');
@@ -20,27 +30,42 @@ if (loginForm) {
         input.addEventListener('input', () => clearInvalid(input));
     });
 
-    loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = (usernameInput && usernameInput.value || '').trim();
-    const password = (passwordInput && passwordInput.value || '').trim();
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = (usernameInput && usernameInput.value || '').trim();
+        const password = (passwordInput && passwordInput.value || '').trim();
 
-    let hasError = false;
-    if (!username) {
-        if (usernameInput) usernameInput.classList.add('is-invalid');
-        hasError = true;
-    }
-    if (!password) {
-        if (passwordInput) passwordInput.classList.add('is-invalid');
-        hasError = true;
-    }
-    if (hasError) {
-        const firstInvalid = document.querySelector('.form-control.is-invalid');
-        if (firstInvalid) firstInvalid.focus();
-        return;
-    }
+        let hasError = false;
+        if (!username) {
+            if (usernameInput) usernameInput.classList.add('is-invalid');
+            hasError = true;
+        }
+        if (!password) {
+            if (passwordInput) passwordInput.classList.add('is-invalid');
+            hasError = true;
+        }
+        if (hasError) {
+            const firstInvalid = document.querySelector('.form-control.is-invalid');
+            if (firstInvalid) firstInvalid.focus();
+            return;
+        }
 
-    if (username === 'ruben@corp.com' && password === '0110309') {
+        const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
+        if (!client) {
+            alert('Supabase no configurado. Revisa la configuracion.');
+            return;
+        }
+
+        const { error } = await client.auth.signInWithPassword({
+            email: username,
+            password
+        });
+
+        if (error) {
+            alert('Acceso denegado\n\nCredenciales incorrectas');
+            return;
+        }
+
         sessionStorage.setItem('isLoggedIn', 'true');
         const displayName = username.split('@')[0] || 'Usuario';
         sessionStorage.setItem('userName', displayName);
@@ -54,10 +79,9 @@ if (loginForm) {
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 800);
-    } else {
-        alert('Acceso denegado\n\nCredenciales incorrectas\n\nUsuario: ruben@corp.com\nContrasena: 0110309');
-    }
-});
+    });
 }
+
+redirectIfLogged();
 
 window.loginWithProvider = loginWithProvider;

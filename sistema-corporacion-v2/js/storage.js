@@ -148,14 +148,26 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('es-PE');
 }
 
-function logout() {
-    if (confirm('¿Desea cerrar sesión?')) {
+async function logout() {
+    if (confirm('?esea cerrar sesi??')) {
+        const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
+        if (client) {
+            await client.auth.signOut();
+        }
         sessionStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('userName');
         window.location.href = 'login.html';
     }
 }
 
-function checkAuth() {
+async function checkAuth() {
+    const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
+    if (client) {
+        const { data } = await client.auth.getSession();
+        if (data && data.session) {
+            return;
+        }
+    }
     if (!sessionStorage.getItem('isLoggedIn')) {
         window.location.href = 'login.html';
     }
