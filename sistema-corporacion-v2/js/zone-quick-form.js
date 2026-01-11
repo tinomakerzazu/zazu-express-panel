@@ -456,6 +456,8 @@ function bindTableActions() {
     document.addEventListener('click', async (event) => {
         const deleteBtn = event.target.closest('[data-delete]');
         if (deleteBtn) {
+            const confirmDelete = window.confirm('¿Seguro que deseas eliminar este registro?');
+            if (!confirmDelete) return;
             const id = deleteBtn.getAttribute('data-delete');
             const zone = deleteBtn.closest('tbody')?.getAttribute('data-zone') || 'provincia';
             const deleted = await deleteSupabaseReceipt(zone, id);
@@ -542,6 +544,9 @@ function bindQuickForms() {
                 }
                 if (typeof showNotification === 'function') {
                     showNotification('Comprobante registrado', 'success');
+                    if (imageMeta && imageMeta.imageUrl) {
+                        showNotification('Imagen subida a Supabase', 'success');
+                    }
                 }
                 form.reset();
                 const preview = form.querySelector('.image-preview');
