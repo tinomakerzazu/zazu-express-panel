@@ -20,12 +20,13 @@ async function checkSupabaseConnection() {
     updateSupabaseStatus('loading', 'Verificando...');
 
     try {
-        if (typeof Storage === 'undefined' || typeof Storage.getPagos !== 'function') {
-            throw new Error('Storage no disponible');
-        }
-
-        const pagos = await Storage.getPagos();
-        updateSupabaseStatus('ok', `Conectado (${pagos.length} pagos)`);
+        const client = typeof initSupabaseClient === 'function' ? initSupabaseClient() : null;
+        if (!client) throw new Error('Supabase no configurado');
+        const { error } = await client
+            .from('comprobantes_lima')
+            .select('id', { head: true });
+        if (error) throw error;
+        updateSupabaseStatus('ok', 'Conectado');
     } catch (err) {
         updateSupabaseStatus('error', 'Sin conexion');
         console.error(err);
