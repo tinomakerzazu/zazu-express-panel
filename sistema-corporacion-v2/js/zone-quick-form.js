@@ -157,9 +157,19 @@ async function insertSupabaseReceipt(zone, payload) {
 async function deleteSupabaseReceipt(zone, id) {
     const client = getSupabaseClient();
     const table = getSupabaseTable(zone);
-    if (!client || !table || !id) return false;
-    const { error } = await client.from(table).delete().eq('id', id);
-    return !error;
+    if (!client || !table || !id) {
+        return { ok: false, error: new Error('Supabase no configurado') };
+    }
+    const { data, error } = await client
+        .from(table)
+        .delete()
+        .eq('id', id)
+        .select('id');
+    if (error) {
+        console.error('Supabase delete error:', error);
+        return { ok: false, error };
+    }
+    return { ok: true, deleted: (data || []).length > 0 };
 }
 
 function getStorageKey(formId) {
@@ -516,12 +526,15 @@ function bindTableActions() {
             const id = deleteBtn.getAttribute('data-delete');
             const zone = deleteBtn.closest('tbody')?.getAttribute('data-zone') || 'provincia';
             const deleted = await deleteSupabaseReceipt(zone, id);
-            if (deleted) {
+            if (deleted && deleted.ok && deleted.deleted) {
                 await syncSupabaseTable(zone);
                 refreshCharts();
                 refreshTables();
                 window.dispatchEvent(new CustomEvent('quickReceiptsUpdated'));
                 return;
+            }
+            if (deleted && deleted.ok === false && typeof showNotification === 'function') {
+                showNotification(`Supabase: ${deleted.error.message || 'No se pudo eliminar'}`, 'error');
             }
             const key = zone === 'lima'
                 ? 'quickReceiptsLima'
