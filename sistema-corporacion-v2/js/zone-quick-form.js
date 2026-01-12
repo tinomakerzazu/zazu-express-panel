@@ -60,6 +60,51 @@ function getSupabaseTable(zone) {
     return '';
 }
 
+function getPendingKey(zone) {
+    if (zone === 'lima') return 'pendingReceiptsLima';
+    if (zone === 'provincia') return 'pendingReceiptsProvincia';
+    if (zone === 'caja') return 'pendingReceiptsCaja';
+    return 'pendingReceipts';
+}
+
+function loadPendingReceipts(zone) {
+    const key = getPendingKey(zone);
+    return JSON.parse(localStorage.getItem(key) || '[]');
+}
+
+function savePendingReceipts(zone, items) {
+    const key = getPendingKey(zone);
+    localStorage.setItem(key, JSON.stringify(items || []));
+}
+
+function normalizeReceiptValue(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function buildReceiptKey(item) {
+    return [
+        normalizeReceiptValue(item.numero),
+        normalizeReceiptValue(item.celular),
+        normalizeReceiptValue(item.monto),
+        normalizeReceiptValue(item.fecha),
+        normalizeReceiptValue(item.hora),
+        normalizeReceiptValue(item.metodo),
+        normalizeReceiptValue(item.destinatario),
+        normalizeReceiptValue(item.destino),
+        normalizeReceiptValue(item.operacion),
+        normalizeReceiptValue(item.seguridad),
+        normalizeReceiptValue(item.concepto),
+        normalizeReceiptValue(item.caja),
+        normalizeReceiptValue(item.tipo)
+    ].join('|');
+}
+
+function mergeSupabaseWithLocal(supabaseItems, localItems) {
+    const supabaseKeys = new Set(supabaseItems.map(buildReceiptKey));
+    const pending = localItems.filter((item) => !supabaseKeys.has(buildReceiptKey(item)));
+    return [...pending, ...supabaseItems];
+}
+
 function getZoneFromFormId(formId) {
     if (formId === 'limaQuickForm') return 'lima';
     if (formId === 'provinciaQuickForm') return 'provincia';
@@ -103,7 +148,9 @@ async function syncSupabaseTable(zone) {
         : zone === 'provincia'
             ? 'quickReceiptsProvincia'
             : 'quickReceiptsCaja';
-    localStorage.setItem(key, JSON.stringify(items));
+    const localItems = JSON.parse(localStorage.getItem(key) || '[]');
+    const merged = mergeSupabaseWithLocal(items, localItems);
+    localStorage.setItem(key, JSON.stringify(merged));
 }
 
 async function syncAllSupabase() {
@@ -113,9 +160,15 @@ async function syncAllSupabase() {
 async function insertSupabaseReceipt(zone, payload) {
     const client = getSupabaseClient();
     const table = getSupabaseTable(zone);
-    if (!client || !table) return false;
+    if (!client || !table) {
+        return { ok: false, error: new Error('Supabase no configurado') };
+    }
     const { error } = await client.from(table).insert(payload);
-    return !error;
+    if (error) {
+        console.error('Supabase insert error:', error);
+        return { ok: false, error };
+    }
+    return { ok: true };
 }
 
 async function deleteSupabaseReceipt(zone, id) {
@@ -179,14 +232,39 @@ async function saveQuickReceipt(form, imageMeta) {
         image_path: imagePath || null,
         image_url: imageUrl || null
     };
-    const stored = await insertSupabaseReceipt(zone, supabasePayload);
-    if (stored) {
-        await syncSupabaseTable(zone);
-        return;
+    if (imageMeta && imageMeta.uploadFailed) {
+        if (typeof showNotification === 'function') {
+            showNotification('Imagen pendiente de subir a Supabase', 'error');
+        }
+        const pending = loadPendingReceipts(zone);
+        pending.push({
+            supabasePayload,
+            imageData: imageMeta.imageData || ''
+        });
+        savePendingReceipts(zone, pending);
+        const items = JSON.parse(localStorage.getItem(key) || '[]');
+        items.push(payload);
+        localStorage.setItem(key, JSON.stringify(items));
+        return false;
     }
+    const stored = await insertSupabaseReceipt(zone, supabasePayload);
+    if (stored && stored.ok) {
+        await syncSupabaseTable(zone);
+        return true;
+    }
+    if (stored && stored.error && typeof showNotification === 'function') {
+        showNotification(`Supabase: ${stored.error.message || 'No se pudo guardar'}`, 'error');
+    }
+    const pending = loadPendingReceipts(zone);
+    pending.push({
+        supabasePayload,
+        imageData: imageMeta && imageMeta.imageData ? imageMeta.imageData : ''
+    });
+    savePendingReceipts(zone, pending);
     const items = JSON.parse(localStorage.getItem(key) || '[]');
     items.push(payload);
     localStorage.setItem(key, JSON.stringify(items));
+    return false;
 }
 
 function buildSeries(items, days = 7) {
@@ -535,7 +613,7 @@ function bindQuickForms() {
             const fileInput = form.querySelector('input[type="file"]');
             const file = fileInput?.files?.[0];
             const finishSave = async (imageMeta) => {
-                await saveQuickReceipt(form, imageMeta);
+                const savedRemote = await saveQuickReceipt(form, imageMeta);
                 const modal = form.closest('.modal');
                 if (modal && typeof closeModal === 'function') {
                     closeModal(modal.id);
@@ -543,7 +621,11 @@ function bindQuickForms() {
                     modal.classList.remove('active');
                 }
                 if (typeof showNotification === 'function') {
-                    showNotification('Comprobante registrado', 'success');
+                    if (savedRemote) {
+                        showNotification('Comprobante registrado', 'success');
+                    } else {
+                        showNotification('Comprobante guardado local, pendiente de Supabase', 'error');
+                    }
                     if (imageMeta && imageMeta.imageUrl) {
                         showNotification('Imagen subida a Supabase', 'success');
                     }
@@ -611,6 +693,22 @@ function fileToDataUrl(file) {
     });
 }
 
+function dataUrlToBlob(dataUrl) {
+    try {
+        const [meta, base64] = dataUrl.split(',');
+        const contentType = (meta || '').split(':')[1]?.split(';')[0] || 'image/jpeg';
+        const binary = atob(base64 || '');
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return new Blob([bytes], { type: contentType });
+    } catch (error) {
+        console.error('No se pudo convertir la imagen:', error);
+        return null;
+    }
+}
+
 function compressImage(file, maxWidth = 1200, quality = 0.7) {
     return new Promise((resolve) => {
         const img = new Image();
@@ -658,6 +756,24 @@ async function uploadToSupabaseStorage(file) {
     };
 }
 
+async function uploadBlobToSupabaseStorage(blob) {
+    const client = getSupabaseClient();
+    if (!client || !blob) return null;
+    const bucket = getStorageBucket();
+    const extension = 'jpg';
+    const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
+    const filePath = `comprobantes/${fileName}`;
+    const { error } = await client.storage
+        .from(bucket)
+        .upload(filePath, blob, { upsert: false, contentType: blob.type || 'image/jpeg' });
+    if (error) return null;
+    const publicUrl = client.storage.from(bucket).getPublicUrl(filePath)?.data?.publicUrl || '';
+    return {
+        imagePath: filePath,
+        imageUrl: publicUrl
+    };
+}
+
 async function handleReceiptImage(file) {
     const uploaded = await uploadToSupabaseStorage(file);
     if (uploaded && uploaded.imageUrl) {
@@ -669,7 +785,34 @@ async function handleReceiptImage(file) {
     }
     const compressed = await compressImage(file);
     const imageData = await fileToDataUrl(compressed);
-    return { imageData };
+    return { imageData, uploadFailed: true };
+}
+
+async function retryPendingReceipts(zone) {
+    const pending = loadPendingReceipts(zone);
+    if (!pending.length) return;
+    const next = [];
+    for (const item of pending) {
+        let payload = item.supabasePayload || {};
+        if (!payload.image_url && item.imageData) {
+            const blob = dataUrlToBlob(item.imageData);
+            const upload = await uploadBlobToSupabaseStorage(blob);
+            if (!upload || !upload.imageUrl) {
+                next.push(item);
+                continue;
+            }
+            payload = {
+                ...payload,
+                image_path: upload.imagePath,
+                image_url: upload.imageUrl
+            };
+        }
+        const stored = await insertSupabaseReceipt(zone, payload);
+        if (!stored || !stored.ok) {
+            next.push({ ...item, supabasePayload: payload });
+        }
+    }
+    savePendingReceipts(zone, next);
 }
 
 function parseReceiptText(text) {
@@ -799,6 +942,8 @@ async function initQuickForms() {
     bindExportButtons();
     bindTableActions();
     bindCajaToggle();
+    await syncAllSupabase();
+    await Promise.all(['lima', 'provincia', 'caja'].map((zone) => retryPendingReceipts(zone)));
     await syncAllSupabase();
     refreshCharts();
     refreshTables();

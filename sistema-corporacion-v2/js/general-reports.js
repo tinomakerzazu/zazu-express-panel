@@ -20,6 +20,34 @@ function getSupabaseClient() {
     return window.supabaseClient || null;
 }
 
+function normalizeReceiptValue(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function buildReceiptKey(item) {
+    return [
+        normalizeReceiptValue(item.numero),
+        normalizeReceiptValue(item.celular),
+        normalizeReceiptValue(item.monto),
+        normalizeReceiptValue(item.fecha),
+        normalizeReceiptValue(item.hora),
+        normalizeReceiptValue(item.metodo),
+        normalizeReceiptValue(item.destinatario),
+        normalizeReceiptValue(item.destino),
+        normalizeReceiptValue(item.operacion),
+        normalizeReceiptValue(item.seguridad),
+        normalizeReceiptValue(item.concepto),
+        normalizeReceiptValue(item.caja),
+        normalizeReceiptValue(item.tipo)
+    ].join('|');
+}
+
+function mergeSupabaseWithLocal(supabaseItems, localItems) {
+    const supabaseKeys = new Set(supabaseItems.map(buildReceiptKey));
+    const pending = localItems.filter((item) => !supabaseKeys.has(buildReceiptKey(item)));
+    return [...pending, ...supabaseItems];
+}
+
 function mapSupabaseRow(row) {
     return {
         id: row.id || '',
@@ -56,7 +84,9 @@ async function syncReportsFromSupabase() {
             .order('created_at', { ascending: false });
         if (error) return;
         const items = (data || []).map(mapSupabaseRow);
-        localStorage.setItem(entry.key, JSON.stringify(items));
+        const localItems = JSON.parse(localStorage.getItem(entry.key) || '[]');
+        const merged = mergeSupabaseWithLocal(items, localItems);
+        localStorage.setItem(entry.key, JSON.stringify(merged));
     }));
 }
 
