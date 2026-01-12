@@ -215,37 +215,49 @@ async function saveQuickReceipt(form, imageMeta) {
         imageData: imageUrl || imageData || '',
         createdAt: new Date().toISOString()
     };
-    const supabasePayload = {
-        numero: payload.numero || null,
-        celular: payload.celular || null,
-        monto: payload.monto || null,
-        fecha: payload.fecha || null,
-        hora: payload.hora || null,
-        metodo: payload.metodo || null,
-        caja: payload.caja || null,
-        tipo: payload.tipo || null,
-        destinatario: payload.destinatario || null,
-        destino: payload.destino || null,
-        operacion: payload.operacion || null,
-        seguridad: payload.seguridad || null,
-        concepto: payload.concepto || null,
-        image_path: imagePath || null,
-        image_url: imageUrl || null
-    };
-    if (imageMeta && imageMeta.uploadFailed) {
-        if (typeof showNotification === 'function') {
-            showNotification('Imagen pendiente de subir a Supabase', 'error');
+    let supabasePayload;
+    if (zone === 'caja') {
+        supabasePayload = {
+            caja: payload.caja || null,
+            tipo: payload.tipo || null,
+            monto: payload.monto || null,
+            fecha: payload.fecha || null,
+            hora: payload.hora || null,
+            concepto: payload.concepto || null,
+            image_path: imagePath || null,
+            image_url: imageUrl || null
+        };
+    } else {
+        supabasePayload = {
+            numero: payload.numero || null,
+            celular: payload.celular || null,
+            monto: payload.monto || null,
+            fecha: payload.fecha || null,
+            hora: payload.hora || null,
+            metodo: payload.metodo || null,
+            destinatario: payload.destinatario || null,
+            destino: payload.destino || null,
+            operacion: payload.operacion || null,
+            seguridad: payload.seguridad || null,
+            concepto: payload.concepto || null,
+            image_path: imagePath || null,
+            image_url: imageUrl || null
+        };
+    }
+    if (imageMeta && imageMeta.uploadFailed && imageMeta.imageData) {
+        const fallbackPayload = {
+            ...supabasePayload,
+            image_path: null,
+            image_url: imageMeta.imageData
+        };
+        const storedFallback = await insertSupabaseReceipt(zone, fallbackPayload);
+        if (storedFallback && storedFallback.ok) {
+            await syncSupabaseTable(zone);
+            return true;
         }
-        const pending = loadPendingReceipts(zone);
-        pending.push({
-            supabasePayload,
-            imageData: imageMeta.imageData || ''
-        });
-        savePendingReceipts(zone, pending);
-        const items = JSON.parse(localStorage.getItem(key) || '[]');
-        items.push(payload);
-        localStorage.setItem(key, JSON.stringify(items));
-        return false;
+        if (storedFallback && storedFallback.error && typeof showNotification === 'function') {
+            showNotification(`Supabase: ${storedFallback.error.message || 'No se pudo guardar'}`, 'error');
+        }
     }
     const stored = await insertSupabaseReceipt(zone, supabasePayload);
     if (stored && stored.ok) {
