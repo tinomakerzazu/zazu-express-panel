@@ -90,6 +90,24 @@ textarea {
     color: var(--text-secondary);
 }
 
+.table th {
+    color: var(--primary-dark);
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+.table td {
+    color: var(--text-primary);
+}
+
+.table tbody tr {
+    background: var(--bg-card);
+}
+
+.table tbody tr:hover {
+    background: var(--bg-card-hover);
+}
+
 .menu-link.active,
 .menu-sublink.active,
 .navbar-quick-link:hover,
