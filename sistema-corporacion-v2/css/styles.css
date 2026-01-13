@@ -699,8 +699,10 @@ textarea {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--text-muted);
-    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 800;
+    margin-bottom: 12px;
+    padding: 0 20px;
 }
 
 .menu-item {
@@ -712,12 +714,13 @@ textarea {
     align-items: center;
     gap: 16px;
     padding: 16px 20px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     border-radius: 12px;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    font-weight: 600;
 }
 
 .menu-link::before {
@@ -733,9 +736,13 @@ textarea {
 }
 
 .menu-link:hover {
-    background: rgba(224, 197, 143, 0.1);
+    background: rgba(224, 197, 143, 0.15);
     color: white;
     transform: translateX(8px);
+}
+
+.menu-link:hover .menu-icon {
+    color: var(--gold);
 }
 
 .menu-link:hover::before {
@@ -744,10 +751,15 @@ textarea {
 }
 
 .menu-link.active {
-    background: linear-gradient(135deg, rgba(224, 197, 143, 0.2) 0%, rgba(224, 197, 143, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(224, 197, 143, 0.25) 0%, rgba(224, 197, 143, 0.1) 100%);
+    color: white;
+    border: 1px solid rgba(224, 197, 143, 0.4);
+    box-shadow: 0 4px 15px rgba(224, 197, 143, 0.25);
+    font-weight: 700;
+}
+
+.menu-link.active .menu-icon {
     color: var(--gold);
-    border: 1px solid rgba(224, 197, 143, 0.3);
-    box-shadow: 0 4px 15px rgba(224, 197, 143, 0.2);
 }
 
 .menu-link.active::after {
@@ -777,8 +789,13 @@ textarea {
 .menu-caret {
     margin-left: auto;
     font-size: 0.9rem;
-    color: var(--text-muted);
-    transition: transform 0.2s ease;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.menu-link:hover .menu-caret,
+.menu-link.active .menu-caret {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .menu-dropdown[open] .menu-caret {
@@ -828,6 +845,8 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.3s ease;
 }
 
 .menu-text {
@@ -2587,18 +2606,25 @@ body.app-shell::before {
 
 .menu-link {
     border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.015);
+    background: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .menu-link:hover {
-    border-color: rgba(224, 197, 143, 0.35);
-    background: rgba(224, 197, 143, 0.12);
+    border-color: rgba(224, 197, 143, 0.4);
+    background: rgba(224, 197, 143, 0.15);
     transform: translateX(4px);
+    color: white;
 }
 
 .menu-link.active {
-    border-color: rgba(224, 197, 143, 0.45);
-    background: linear-gradient(135deg, rgba(224, 197, 143, 0.25) 0%, rgba(224, 197, 143, 0.08) 100%);
+    border-color: rgba(224, 197, 143, 0.5);
+    background: linear-gradient(135deg, rgba(224, 197, 143, 0.25) 0%, rgba(224, 197, 143, 0.1) 100%);
+    color: white;
+}
+
+.menu-link.active .menu-icon {
+    color: var(--gold);
 }
 
 .main-content {
@@ -2797,15 +2823,24 @@ body.app-shell::before {
     border-right: 1px solid rgba(217, 203, 194, 0.07);
 }
 
+.menu-link {
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .menu-link:hover {
-    border-color: rgba(224, 197, 143, 0.35);
-    background: rgba(224, 197, 143, 0.1);
+    border-color: rgba(224, 197, 143, 0.4);
+    background: rgba(224, 197, 143, 0.15);
+    color: white;
 }
 
 .menu-link.active {
     border-color: rgba(224, 197, 143, 0.5);
-    color: var(--accent);
-    background: linear-gradient(135deg, rgba(224, 197, 143, 0.22) 0%, rgba(224, 197, 143, 0.08) 100%);
+    color: white;
+    background: linear-gradient(135deg, rgba(224, 197, 143, 0.25) 0%, rgba(224, 197, 143, 0.1) 100%);
+}
+
+.menu-link.active .menu-icon {
+    color: var(--gold);
 }
 
 .main-content {
