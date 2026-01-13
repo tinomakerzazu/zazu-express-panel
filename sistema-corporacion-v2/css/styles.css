@@ -1614,12 +1614,18 @@ textarea {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(17, 34, 80, 0.85);
+    background: rgba(17, 34, 80, 0.75);
     z-index: 1000;
     justify-content: center;
     align-items: center;
     padding: 20px;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    animation: fadeInOverlay 0.3s ease;
+}
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal.active {
@@ -1727,19 +1733,34 @@ textarea {
     background: rgba(245, 240, 233, 0.5);
 }
 
-/* ========== MODAL SIMPLE / ALERT / CONFIRM ========== */
+/* ========== MODAL SIMPLE / ALERT / CONFIRM - ESTILO PREMIUM ========== */
 .modal-simple,
 .alert-modal,
 .confirm-modal {
-    background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
-    border-radius: 20px;
-    max-width: 500px;
+    background: var(--bg-card);
+    border-radius: 24px;
+    max-width: 480px;
     width: 100%;
-    border: 2px solid var(--border);
-    box-shadow: 0 30px 80px rgba(17, 34, 80, 0.4), 0 0 0 1px rgba(224, 197, 143, 0.1);
+    border: none;
+    box-shadow: 
+        0 20px 60px rgba(17, 34, 80, 0.3),
+        0 0 0 1px rgba(224, 197, 143, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
-    animation: slideUp 0.4s ease;
+    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    backdrop-filter: blur(20px);
+}
+
+@keyframes modalSlideIn {
+    from { 
+        transform: scale(0.9) translateY(20px); 
+        opacity: 0; 
+    }
+    to { 
+        transform: scale(1) translateY(0); 
+        opacity: 1; 
+    }
 }
 
 .modal-simple::before,
@@ -1747,12 +1768,25 @@ textarea {
 .confirm-modal::before {
     content: '';
     position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--primary) 50%, var(--gold) 100%);
+    z-index: 2;
+}
+
+.modal-simple::after,
+.alert-modal::after,
+.confirm-modal::after {
+    content: '';
+    position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at 20% 10%, rgba(224, 197, 143, 0.15), transparent 55%),
-        radial-gradient(circle at 80% 0%, rgba(60, 80, 112, 0.2), transparent 60%);
-    opacity: 0.9;
+        radial-gradient(circle at 0% 0%, rgba(224, 197, 143, 0.08), transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(60, 80, 112, 0.1), transparent 50%);
     pointer-events: none;
+    z-index: 0;
 }
 
 .modal-simple-header,
@@ -1760,30 +1794,57 @@ textarea {
 .confirm-modal-header {
     background: linear-gradient(135deg, #3C5070 0%, #112250 100%);
     color: white;
-    padding: 24px 28px;
-    border-bottom: 2px solid var(--gold);
+    padding: 20px 28px;
+    border-bottom: none;
     position: relative;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-simple-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(224, 197, 143, 0.5) 50%, transparent 100%);
 }
 
 .modal-simple-header h3,
 .alert-modal-header h3,
 .confirm-modal-header h3 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: white;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-simple-header h3::before,
+.alert-modal-header h3::before,
+.confirm-modal-header h3::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: var(--gold);
+    border-radius: 2px;
 }
 
 .modal-simple-body,
 .alert-modal-body,
 .confirm-modal-body {
-    padding: 28px;
+    padding: 32px 28px;
     position: relative;
     z-index: 1;
     color: var(--text-primary);
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.7;
+    background: var(--bg-card);
 }
 
 .modal-simple-footer,
@@ -1791,17 +1852,53 @@ textarea {
 .confirm-modal-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    padding: 20px 28px;
-    border-top: 1px solid var(--border);
-    background: rgba(245, 240, 233, 0.5);
+    gap: 14px;
+    padding: 20px 28px 28px;
+    border-top: none;
+    background: var(--bg-card);
+    position: relative;
+    z-index: 1;
+}
+
+.modal-simple-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 28px;
+    right: 28px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--border) 50%, transparent 100%);
 }
 
 .modal-simple-footer .btn,
 .alert-modal-footer .btn,
 .confirm-modal-footer .btn {
-    min-width: 120px;
+    min-width: 130px;
     justify-content: center;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-simple-footer .btn::before,
+.alert-modal-footer .btn::before,
+.confirm-modal-footer .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-simple-footer .btn:hover::before,
+.alert-modal-footer .btn:hover::before,
+.confirm-modal-footer .btn:hover::before {
+    opacity: 1;
 }
 
 .modal-simple-footer .btn-primary,
@@ -1809,16 +1906,24 @@ textarea {
 .confirm-modal-footer .btn-primary {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
-    border: 1px solid var(--primary-dark);
-    font-weight: 700;
+    border: 2px solid transparent;
+    box-shadow: 0 4px 15px rgba(60, 80, 112, 0.3);
 }
 
 .modal-simple-footer .btn-primary:hover,
 .alert-modal-footer .btn-primary:hover,
 .confirm-modal-footer .btn-primary:hover {
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(60, 80, 112, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(60, 80, 112, 0.5);
+    border-color: var(--gold);
+}
+
+.modal-simple-footer .btn-primary:active,
+.alert-modal-footer .btn-primary:active,
+.confirm-modal-footer .btn-primary:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(60, 80, 112, 0.4);
 }
 
 .modal-simple-footer .btn-secondary,
@@ -1828,15 +1933,24 @@ textarea {
     color: var(--text-secondary);
     border: 2px solid var(--border);
     font-weight: 600;
+    box-shadow: none;
 }
 
 .modal-simple-footer .btn-secondary:hover,
 .alert-modal-footer .btn-secondary:hover,
 .confirm-modal-footer .btn-secondary:hover {
-    background: var(--bg-card-hover);
+    background: linear-gradient(135deg, rgba(60, 80, 112, 0.05) 0%, rgba(17, 34, 80, 0.05) 100%);
     border-color: var(--primary);
     color: var(--primary);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(60, 80, 112, 0.2);
+}
+
+.modal-simple-footer .btn-secondary:active,
+.alert-modal-footer .btn-secondary:active,
+.confirm-modal-footer .btn-secondary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(60, 80, 112, 0.15);
 }
 
 .receipt-form {
