@@ -37,6 +37,44 @@ const downloadResumenBtn = document.getElementById('downloadResumenBtn');
 
 let pagosCache = [];
 
+function getSupabaseClient() {
+    return window.supabaseClient || null;
+}
+
+function normalizeMetodo(metodo) {
+    if (!metodo) return 'Efectivo';
+    const value = String(metodo).toLowerCase();
+    if (value === 'yape' || value === 'plin') return 'Yape/Plin';
+    if (value === 'transferencia') return 'Transferencia';
+    if (value === 'tarjeta') return 'Tarjeta';
+    return metodo;
+}
+
+function mapSupabaseReceipt(row, zone) {
+    if (zone === 'caja') {
+        return {
+            id: row.id,
+            fecha: row.fecha || '',
+            cliente: row.caja || 'Caja',
+            metodo: 'Efectivo',
+            referencia: row.concepto || '',
+            monto: row.monto || 0,
+            estado: 'Registrado',
+            tipo: row.tipo || ''
+        };
+    }
+    return {
+        id: row.id,
+        fecha: row.fecha || '',
+        cliente: row.destinatario || row.celular || 'Sin nombre',
+        metodo: normalizeMetodo(row.metodo),
+        referencia: row.operacion || row.numero || '',
+        monto: row.monto || 0,
+        estado: 'Registrado',
+        tipo: 'Ingreso'
+    };
+}
+
 function parseDate(value) {
     if (!value) return null;
     return new Date(`${value}T00:00:00`);
@@ -355,7 +393,25 @@ function downloadResumen() {
 
 async function loadPagos() {
     try {
-        pagosCache = await Storage.getPagos();
+        const client = getSupabaseClient();
+        if (!client) throw new Error('Supabase no configurado');
+
+        const tables = [
+            { table: 'comprobantes_lima', zone: 'lima' },
+            { table: 'comprobantes_provincia', zone: 'provincia' },
+            { table: 'comprobantes_caja', zone: 'caja' }
+        ];
+
+        const results = await Promise.all(tables.map(async (entry) => {
+            const { data, error } = await client
+                .from(entry.table)
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            return (data || []).map((row) => mapSupabaseReceipt(row, entry.zone));
+        }));
+
+        pagosCache = results.flat();
         renderReport();
     } catch (err) {
         console.error(err);
