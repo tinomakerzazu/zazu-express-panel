@@ -423,17 +423,21 @@ textarea {
     font-size: 15px;
     transition: all 0.3s ease;
     background: var(--bg-input);
-    color: white;
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(224, 197, 143, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(60, 80, 112, 0.15);
+    background: var(--white);
 }
 
 .form-control::placeholder {
     color: var(--text-muted);
+    opacity: 0.8;
+    font-weight: 500;
 }
 
 .remember-forgot {
@@ -1170,7 +1174,7 @@ textarea {
 
 .page-header h1 {
     font-size: 2.2rem;
-    color: white;
+    color: var(--text-primary);
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -1370,50 +1374,155 @@ textarea {
     display: flex;
     align-items: center;
     gap: 12px;
+    color: white;
+    font-weight: 700;
 }
 
 .card-header h3 i {
     color: var(--gold);
+    font-size: 1.3rem;
 }
 
 .card-body {
     padding: 24px;
 }
 
+.card-body h1,
+.card-body h2,
+.card-body h3,
+.card-body h4,
+.card-body h5,
+.card-body h6 {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.card-body h1 {
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+}
+
+.card-body h2 {
+    font-size: 1.5rem;
+    margin-bottom: 14px;
+}
+
+.card-body h3 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+}
+
 /* ========== TABLES PREMIUM ========== */
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    background: var(--bg-card);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
 .table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--bg-card);
+    border-radius: 12px;
+    overflow: hidden;
+    min-width: 600px;
 }
 
 .table thead {
-    background: rgba(224, 197, 143, 0.05);
+    background: linear-gradient(135deg, rgba(60, 80, 112, 0.15) 0%, rgba(17, 34, 80, 0.12) 100%);
+    border-bottom: 3px solid var(--primary);
 }
 
 .table th {
-    padding: 16px;
+    padding: 18px 20px;
     text-align: left;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--primary);
-    border-bottom: 2px solid var(--border);
+    letter-spacing: 1.5px;
+    color: var(--primary-dark);
+    border-bottom: 3px solid var(--primary);
+    background: linear-gradient(135deg, rgba(60, 80, 112, 0.18) 0%, rgba(17, 34, 80, 0.12) 100%);
+    position: relative;
+    white-space: nowrap;
+}
+
+.table th:first-child {
+    padding-left: 24px;
+    border-top-left-radius: 12px;
+}
+
+.table th:last-child {
+    padding-right: 24px;
+    border-top-right-radius: 12px;
+}
+
+.table th::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);
+    opacity: 0.7;
 }
 
 .table td {
-    padding: 18px 16px;
-    border-bottom: 1px solid var(--border);
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(217, 203, 194, 0.25);
     color: var(--text-primary);
+    font-size: 14px;
+    vertical-align: middle;
+    font-weight: 500;
+}
+
+.table td:first-child {
+    padding-left: 24px;
+}
+
+.table td:last-child {
+    padding-right: 24px;
 }
 
 .table tbody tr {
-    transition: all 0.2s;
+    background: var(--bg-card);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 3px solid transparent;
+    position: relative;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 12px;
+}
+
+.table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 12px;
 }
 
 .table tbody tr:hover {
-    background: rgba(224, 197, 143, 0.05);
-    transform: scale(1.01);
+    background: linear-gradient(90deg, rgba(224, 197, 143, 0.12) 0%, rgba(224, 197, 143, 0.05) 100%);
+    border-left-color: var(--gold);
+    transform: translateX(3px);
+    box-shadow: -3px 0 12px rgba(224, 197, 143, 0.2), 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.table tbody tr:nth-child(even) {
+    background: rgba(245, 240, 233, 0.4);
+}
+
+.table tbody tr:nth-child(even):hover {
+    background: linear-gradient(90deg, rgba(224, 197, 143, 0.15) 0%, rgba(224, 197, 143, 0.08) 100%);
+}
+
+.table tbody tr:first-child {
+    border-top: 1px solid rgba(217, 203, 194, 0.2);
 }
 
 /* ========== BUTTONS PREMIUM ========== */
@@ -1667,9 +1776,10 @@ textarea {
     font-size: 10px;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    background: rgba(217, 203, 194, 0.15);
-    color: #e8d8c4;
-    border: 1px solid rgba(217, 203, 194, 0.3);
+    background: rgba(224, 197, 143, 0.15);
+    color: var(--text-primary);
+    border: 1px solid rgba(224, 197, 143, 0.3);
+    font-weight: 600;
 }
 
 .table-toolbar {
@@ -1678,7 +1788,12 @@ textarea {
     gap: 12px;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .table-filters {
@@ -1690,16 +1805,29 @@ textarea {
 
 .filter-input,
 .filter-select {
-    background: rgba(255, 246, 236, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
     color: var(--text-primary);
     border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.filter-input::placeholder {
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(60, 80, 112, 0.1);
+    background: var(--white);
+}
+
+.filter-input::placeholder,
+.filter-select::placeholder {
     color: var(--text-muted);
+    opacity: 0.8;
+    font-weight: 500;
 }
 
 .preview-thumb {
@@ -2022,6 +2150,7 @@ textarea {
 .panel-header h3 {
     font-size: 1.1rem;
     font-weight: 700;
+    color: var(--text-primary);
 }
 
 .panel-chip {
@@ -2513,8 +2642,15 @@ body.app-shell::before {
 }
 
 .card-header {
-    border-bottom: 1px solid rgba(60, 80, 112, 0.35);
-    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
+    border-bottom: 2px solid var(--gold);
+    background: linear-gradient(135deg, #3C5070 0%, #112250 100%);
+    color: white;
+}
+
+.card-header h3,
+.card-header h2,
+.card-header h1 {
+    color: white;
 }
 
 .form-control {
@@ -2806,19 +2942,27 @@ body.app-shell::before {
 
 .empty-state {
     text-align: center;
-    padding: 20px 12px;
-    color: var(--text-secondary);
+    padding: 40px 20px;
+    color: var(--text-muted);
 }
 
 .empty-state i {
-    font-size: 2.4rem;
-    color: var(--accent);
-    margin-bottom: 8px;
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    opacity: 0.6;
 }
 
 .empty-state h4 {
-    color: var(--text-primary);
-    margin-bottom: 6px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    font-size: 14px;
 }
 
 .tab-item {
