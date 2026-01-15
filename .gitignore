@@ -1,0 +1,23 @@
+# Archivos de documentación
+*.md
+!README.md
+
+# Node modules
+node_modules/
+server/node_modules/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Archivos temporales
+*.tmp
+*.temp
