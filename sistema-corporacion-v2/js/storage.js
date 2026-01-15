@@ -1,8 +1,40 @@
-﻿const API_BASE = '/.netlify/functions';
+const API_BASE = '/.netlify/functions';
+
+/**
+ * Obtiene el token de autenticación del usuario actual
+ */
+async function getAuthToken() {
+    const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
+    if (!client) return null;
+    
+    const { data } = await client.auth.getSession();
+    return data?.session?.access_token || null;
+}
 
 async function apiRequest(path, options = {}) {
-    const response = await fetch(`${API_BASE}${path}`, options);
+    // Agregar token de autenticación a las peticiones
+    const token = await getAuthToken();
+    const headers = {
+        ...options.headers,
+        'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers
+    });
+
     if (!response.ok) {
+        if (response.status === 401) {
+            // Token inválido o expirado, redirigir al login
+            sessionStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+            return;
+        }
         const message = await response.text();
         throw new Error(message || 'Error de servidor');
     }
@@ -186,7 +218,12 @@ function closeModal(modalId) {
 function showNotification(message, type = 'success') {
     const notif = document.createElement('div');
     notif.className = `notification ${type}`;
-    notif.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-circle-fill'}"></i> ${message}`;
+    // Usar createElement en lugar de innerHTML para prevenir XSS
+    const icon = document.createElement('i');
+    icon.className = `bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-circle-fill'}`;
+    notif.appendChild(icon);
+    const text = document.createTextNode(' ' + (message || ''));
+    notif.appendChild(text);
     document.body.appendChild(notif);
     setTimeout(() => notif.remove(), 3000);
 }

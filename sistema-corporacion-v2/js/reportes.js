@@ -1,4 +1,4 @@
-﻿const reportStartDate = document.getElementById('reportStartDate');
+const reportStartDate = document.getElementById('reportStartDate');
 const reportEndDate = document.getElementById('reportEndDate');
 const reportMetodo = document.getElementById('reportMetodo');
 const reportEstado = document.getElementById('reportEstado');

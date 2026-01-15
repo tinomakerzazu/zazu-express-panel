@@ -117,23 +117,35 @@ function mapSupabaseRow(row) {
 }
 
 async function syncSupabaseTable(zone) {
-    const client = getSupabaseClient();
-    const table = getSupabaseTable(zone);
-    if (!client || !table) return;
-    const { data, error } = await client
-        .from(table)
-        .select('*')
-        .order('created_at', { ascending: false });
-    if (error) return;
-    const items = (data || []).map(mapSupabaseRow);
-    const key = zone === 'lima'
-        ? 'quickReceiptsLima'
-        : zone === 'provincia'
-            ? 'quickReceiptsProvincia'
-            : 'quickReceiptsCaja';
-    const localItems = JSON.parse(localStorage.getItem(key) || '[]');
-    const merged = mergeSupabaseWithLocal(items, localItems);
-    localStorage.setItem(key, JSON.stringify(merged));
+    try {
+        const client = getSupabaseClient();
+        const table = getSupabaseTable(zone);
+        if (!client || !table) {
+            console.warn(`No se puede sincronizar ${zone}: cliente o tabla no disponible`);
+            return;
+        }
+        const { data, error } = await client
+            .from(table)
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) {
+            console.error(`Error al sincronizar ${zone}:`, error);
+            return;
+        }
+        const items = (data || []).map(mapSupabaseRow);
+        const key = zone === 'lima'
+            ? 'quickReceiptsLima'
+            : zone === 'provincia'
+                ? 'quickReceiptsProvincia'
+                : 'quickReceiptsCaja';
+        
+        const localItems = safeParseLocalStorage(key, []);
+        
+        const merged = mergeSupabaseWithLocal(items, localItems);
+        localStorage.setItem(key, JSON.stringify(merged));
+    } catch (err) {
+        console.error(`Error general al sincronizar ${zone}:`, err);
+    }
 }
 
 async function syncAllSupabase() {
@@ -179,6 +191,29 @@ function getStorageKey(formId) {
     return 'quickReceipts';
 }
 
+/**
+ * Parsea JSON de localStorage de forma segura
+ * @param {string} key - Clave de localStorage
+ * @param {any} defaultValue - Valor por defecto si falla
+ * @returns {any} Datos parseados o valor por defecto
+ */
+function safeParseLocalStorage(key, defaultValue = []) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return defaultValue;
+        return JSON.parse(raw);
+    } catch (err) {
+        console.error(`Error al parsear localStorage para ${key}:`, err);
+        // Limpiar datos corruptos
+        try {
+            localStorage.removeItem(key);
+        } catch (removeErr) {
+            console.error(`Error al limpiar ${key}:`, removeErr);
+        }
+        return defaultValue;
+    }
+}
+
 async function saveQuickReceipt(form, imageMeta) {
     const formId = form.getAttribute('id') || '';
     const zone = getZoneFromFormId(formId);
@@ -190,21 +225,40 @@ async function saveQuickReceipt(form, imageMeta) {
     const imageData = imageMeta && imageMeta.imageData ? imageMeta.imageData : '';
     const imagePath = imageMeta && imageMeta.imagePath ? imageMeta.imagePath : '';
     const imageUrl = imageMeta && imageMeta.imageUrl ? imageMeta.imageUrl : '';
+    // Obtener y sanitizar valores del formulario
+    const getFormValue = (name, maxLength = 1000) => {
+        const value = form.querySelector(`[name="${name}"]`)?.value || '';
+        return typeof sanitizeString === 'function' ? sanitizeString(value, maxLength) : value.trim();
+    };
+
+    // Validar monto
+    const montoValue = form.querySelector('[name="monto"]')?.value || '';
+    const montoNum = typeof sanitizeNumber === 'function' 
+        ? sanitizeNumber(montoValue, 0, 999999999, 0)
+        : (parseFloat(montoValue) || 0);
+    
+    if (montoNum <= 0 && montoValue) {
+        if (typeof showNotification === 'function') {
+            showNotification('El monto debe ser mayor a 0', 'error');
+        }
+        return false;
+    }
+
     const payload = {
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        numero: form.querySelector('[name="numero"]')?.value || '',
-        celular: form.querySelector('[name="celular"]')?.value || '',
-        monto: form.querySelector('[name="monto"]')?.value || '',
-        fecha: form.querySelector('[name="fecha"]')?.value || '',
-        hora: form.querySelector('[name="hora"]')?.value || '',
-        metodo: form.querySelector('[name="metodo"]')?.value || '',
-        caja: form.querySelector('[name="caja"]')?.value || '',
-        tipo: form.querySelector('[name="tipo"]')?.value || '',
-        destinatario: form.querySelector('[name="destinatario"]')?.value || '',
-        destino: form.querySelector('[name="destino"]')?.value || '',
-        operacion: form.querySelector('[name="operacion"]')?.value || '',
-        seguridad: form.querySelector('[name="seguridad"]')?.value || '',
-        concepto: form.querySelector('[name="concepto"]')?.value || '',
+        numero: getFormValue('numero', 50),
+        celular: typeof sanitizePhone === 'function' ? sanitizePhone(getFormValue('celular', 20)) : getFormValue('celular', 20),
+        monto: String(montoNum),
+        fecha: getFormValue('fecha', 10),
+        hora: getFormValue('hora', 10),
+        metodo: getFormValue('metodo', 50),
+        caja: getFormValue('caja', 50),
+        tipo: getFormValue('tipo', 50),
+        destinatario: getFormValue('destinatario', 200),
+        destino: getFormValue('destino', 200),
+        operacion: getFormValue('operacion', 50),
+        seguridad: getFormValue('seguridad', 50),
+        concepto: getFormValue('concepto', 1000),
         imageData: imageUrl || imageData || '',
         createdAt: new Date().toISOString()
     };
@@ -310,9 +364,9 @@ function renderChart(zone, series) {
 }
 
 function refreshCharts() {
-    const lima = JSON.parse(localStorage.getItem('quickReceiptsLima') || '[]');
-    const provincia = JSON.parse(localStorage.getItem('quickReceiptsProvincia') || '[]');
-    const caja = JSON.parse(localStorage.getItem('quickReceiptsCaja') || '[]');
+    const lima = safeParseLocalStorage('quickReceiptsLima', []);
+    const provincia = safeParseLocalStorage('quickReceiptsProvincia', []);
+    const caja = safeParseLocalStorage('quickReceiptsCaja', []);
     renderChart('lima', buildSeries(lima));
     renderChart('provincia', buildSeries(provincia));
     renderChart('caja', buildSeries(caja));
@@ -377,9 +431,9 @@ function renderQuickTable(zone, items, filteredItems) {
 }
 
 function refreshTables() {
-    const lima = JSON.parse(localStorage.getItem('quickReceiptsLima') || '[]');
-    const provincia = JSON.parse(localStorage.getItem('quickReceiptsProvincia') || '[]');
-    const caja = JSON.parse(localStorage.getItem('quickReceiptsCaja') || '[]');
+    const lima = safeParseLocalStorage('quickReceiptsLima', []);
+    const provincia = safeParseLocalStorage('quickReceiptsProvincia', []);
+    const caja = safeParseLocalStorage('quickReceiptsCaja', []);
     renderQuickTable('lima', lima, applyFilters('lima', lima));
     renderQuickTable('provincia', provincia, applyFilters('provincia', provincia));
     renderQuickTable('caja', caja, applyFilters('caja', caja));
@@ -421,7 +475,7 @@ function bindTableFilters() {
 }
 
 function exportExcel(zone) {
-    const items = JSON.parse(localStorage.getItem(`quickReceipts${zone[0].toUpperCase()}${zone.slice(1)}`) || '[]');
+    const items = safeParseLocalStorage(`quickReceipts${zone[0].toUpperCase()}${zone.slice(1)}`, []);
     const rows = applyFilters(zone, items);
     const header = zone === 'caja'
         ? ['Fecha', 'Hora', 'Caja', 'Tipo', 'Monto', 'Concepto']
@@ -466,7 +520,7 @@ function exportExcel(zone) {
 }
 
 function exportPDF(zone) {
-    const items = JSON.parse(localStorage.getItem(`quickReceipts${zone[0].toUpperCase()}${zone.slice(1)}`) || '[]');
+    const items = safeParseLocalStorage(`quickReceipts${zone[0].toUpperCase()}${zone.slice(1)}`, []);
     const rows = applyFilters(zone, items);
     const win = window.open('', '_blank');
     if (!win) return;
@@ -541,7 +595,7 @@ function bindTableActions() {
                 : zone === 'caja'
                     ? 'quickReceiptsCaja'
                     : 'quickReceiptsProvincia';
-            const items = JSON.parse(localStorage.getItem(key) || '[]');
+            const items = safeParseLocalStorage(key, []);
             const index = Number(deleteBtn.getAttribute('data-index'));
             let next = items;
             if (id) {
@@ -726,18 +780,43 @@ function compressImage(file, maxWidth = 1200, quality = 0.6) {
     });
 }
 
+// Tamaño máximo de archivo: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 async function uploadToSupabaseStorage(file) {
+    // Validar tamaño del archivo antes de procesarlo
+    if (file.size > MAX_FILE_SIZE) {
+        console.error(`Archivo demasiado grande: ${(file.size / 1024 / 1024).toFixed(2)}MB. Máximo permitido: ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+        if (typeof showNotification === 'function') {
+            showNotification(`El archivo es demasiado grande. Máximo: ${MAX_FILE_SIZE / 1024 / 1024}MB`, 'error');
+        }
+        return null;
+    }
+
     const client = getSupabaseClient();
     if (!client) return null;
     const bucket = getStorageBucket();
     const compressed = await compressImage(file);
+    
+    // Validar tamaño después de compresión
+    if (compressed && compressed.size > MAX_FILE_SIZE) {
+        console.error(`Archivo comprimido demasiado grande: ${(compressed.size / 1024 / 1024).toFixed(2)}MB`);
+        if (typeof showNotification === 'function') {
+            showNotification('El archivo es demasiado grande incluso después de compresión', 'error');
+        }
+        return null;
+    }
+
     const extension = 'jpg';
     const fileName = `${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
     const filePath = `comprobantes/${fileName}`;
     const { error } = await client.storage
         .from(bucket)
         .upload(filePath, compressed, { upsert: false, contentType: 'image/jpeg' });
-    if (error) return null;
+    if (error) {
+        console.error('Error al subir archivo:', error);
+        return null;
+    }
     const publicUrl = client.storage.from(bucket).getPublicUrl(filePath)?.data?.publicUrl || '';
     return {
         imagePath: filePath,
@@ -746,6 +825,15 @@ async function uploadToSupabaseStorage(file) {
 }
 
 async function uploadBlobToSupabaseStorage(blob) {
+    // Validar tamaño del blob
+    if (!blob || blob.size > MAX_FILE_SIZE) {
+        console.error(`Blob demasiado grande: ${blob ? (blob.size / 1024 / 1024).toFixed(2) : 0}MB. Máximo: ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+        if (typeof showNotification === 'function') {
+            showNotification(`El archivo es demasiado grande. Máximo: ${MAX_FILE_SIZE / 1024 / 1024}MB`, 'error');
+        }
+        return null;
+    }
+
     const client = getSupabaseClient();
     if (!client || !blob) return null;
     const bucket = getStorageBucket();
@@ -755,7 +843,10 @@ async function uploadBlobToSupabaseStorage(blob) {
     const { error } = await client.storage
         .from(bucket)
         .upload(filePath, blob, { upsert: false, contentType: blob.type || 'image/jpeg' });
-    if (error) return null;
+    if (error) {
+        console.error('Error al subir blob:', error);
+        return null;
+    }
     const publicUrl = client.storage.from(bucket).getPublicUrl(filePath)?.data?.publicUrl || '';
     return {
         imagePath: filePath,

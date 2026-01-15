@@ -1,7 +1,15 @@
-﻿const { getSupabaseClient } = require('./_supabase');
+const { getSupabaseClient } = require('./_supabase');
 const { jsonResponse, parseJsonBody, getPathId, makeId } = require('./_utils');
+const { validateAuth } = require('./_auth');
+const { sanitizeString, isValidDate } = require('./_validation');
 
 exports.handler = async (event) => {
+  // Validar autenticación
+  const authResult = await validateAuth(event);
+  if (!authResult.valid) {
+    return jsonResponse(401, { error: 'No autorizado', message: authResult.error });
+  }
+
   const supabase = getSupabaseClient();
   const method = event.httpMethod;
   const id = getPathId(event, 'eventos');
@@ -19,14 +27,19 @@ exports.handler = async (event) => {
         return jsonResponse(400, { error: 'Faltan campos obligatorios.' });
       }
 
+      // Validar fecha
+      if (!isValidDate(payload.fecha)) {
+        return jsonResponse(400, { error: 'Fecha inválida.' });
+      }
+
       const now = new Date().toISOString();
       const record = {
         id: makeId(),
         fecha: payload.fecha,
-        cliente: payload.cliente || '',
-        tipo: payload.tipo,
-        detalle: payload.detalle || '',
-        prioridad: payload.prioridad || 'Media',
+        cliente: sanitizeString(payload.cliente || '', 200),
+        tipo: sanitizeString(payload.tipo, 50),
+        detalle: sanitizeString(payload.detalle || '', 2000),
+        prioridad: sanitizeString(payload.prioridad || 'Media', 50),
         created_at: now,
         updated_at: now
       };
@@ -39,9 +52,20 @@ exports.handler = async (event) => {
     if (method === 'PUT' && id) {
       const payload = parseJsonBody(event.body);
       const updates = {
-        ...payload,
+        fecha: payload.fecha ? (isValidDate(payload.fecha) ? payload.fecha : undefined) : undefined,
+        cliente: payload.cliente ? sanitizeString(payload.cliente, 200) : undefined,
+        tipo: payload.tipo ? sanitizeString(payload.tipo, 50) : undefined,
+        detalle: payload.detalle ? sanitizeString(payload.detalle, 2000) : undefined,
+        prioridad: payload.prioridad ? sanitizeString(payload.prioridad, 50) : undefined,
         updated_at: new Date().toISOString()
       };
+      
+      // Remover campos undefined
+      Object.keys(updates).forEach(key => {
+        if (updates[key] === undefined) {
+          delete updates[key];
+        }
+      });
 
       const { data, error } = await supabase
         .from('eventos')
@@ -61,6 +85,7 @@ exports.handler = async (event) => {
 
     return jsonResponse(405, { error: 'Metodo no permitido.' });
   } catch (err) {
-    return jsonResponse(500, { error: err.message || 'Error en eventos.' });
+    console.error('Error en eventos:', err);
+    return jsonResponse(500, { error: 'Error al procesar la solicitud.' });
   }
 };

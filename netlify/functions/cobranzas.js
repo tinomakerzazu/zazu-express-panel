@@ -1,7 +1,15 @@
-﻿const { getSupabaseClient } = require('./_supabase');
+const { getSupabaseClient } = require('./_supabase');
 const { jsonResponse, parseJsonBody, getPathId, makeId } = require('./_utils');
+const { validateAuth } = require('./_auth');
+const { sanitizeString, sanitizeNumber } = require('./_validation');
 
 exports.handler = async (event) => {
+  // Validar autenticación
+  const authResult = await validateAuth(event);
+  if (!authResult.valid) {
+    return jsonResponse(401, { error: 'No autorizado', message: authResult.error });
+  }
+
   const supabase = getSupabaseClient();
   const method = event.httpMethod;
   const id = getPathId(event, 'cobranzas');
@@ -22,11 +30,11 @@ exports.handler = async (event) => {
       const now = new Date().toISOString();
       const record = {
         id: makeId(),
-        cliente: payload.cliente,
-        saldo: Number(payload.saldo) || 0,
-        dias_mora: Number(payload.diasMora || 0),
-        ultima_gestion: payload.ultimaGestion || '',
-        estado: payload.estado || 'Pendiente',
+        cliente: sanitizeString(payload.cliente, 200),
+        saldo: sanitizeNumber(payload.saldo, 0, 999999999),
+        dias_mora: sanitizeNumber(payload.diasMora || 0, 0, 9999),
+        ultima_gestion: sanitizeString(payload.ultimaGestion || '', 1000),
+        estado: sanitizeString(payload.estado || 'Pendiente', 50),
         created_at: now,
         updated_at: now
       };
@@ -39,11 +47,11 @@ exports.handler = async (event) => {
     if (method === 'PUT' && id) {
       const payload = parseJsonBody(event.body);
       const updates = {
-        cliente: payload.cliente,
-        saldo: payload.saldo !== undefined ? Number(payload.saldo) : undefined,
-        dias_mora: payload.diasMora !== undefined ? Number(payload.diasMora) : undefined,
-        ultima_gestion: payload.ultimaGestion,
-        estado: payload.estado,
+        cliente: payload.cliente ? sanitizeString(payload.cliente, 200) : undefined,
+        saldo: payload.saldo !== undefined ? sanitizeNumber(payload.saldo, 0, 999999999) : undefined,
+        dias_mora: payload.diasMora !== undefined ? sanitizeNumber(payload.diasMora, 0, 9999) : undefined,
+        ultima_gestion: payload.ultimaGestion ? sanitizeString(payload.ultimaGestion, 1000) : undefined,
+        estado: payload.estado ? sanitizeString(payload.estado, 50) : undefined,
         updated_at: new Date().toISOString()
       };
 
@@ -65,6 +73,7 @@ exports.handler = async (event) => {
 
     return jsonResponse(405, { error: 'Metodo no permitido.' });
   } catch (err) {
-    return jsonResponse(500, { error: err.message || 'Error en cobranzas.' });
+    console.error('Error en cobranzas:', err);
+    return jsonResponse(500, { error: 'Error al procesar la solicitud.' });
   }
 };

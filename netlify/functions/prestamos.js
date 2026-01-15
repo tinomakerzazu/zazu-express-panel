@@ -1,7 +1,15 @@
-﻿const { getSupabaseClient } = require('./_supabase');
+const { getSupabaseClient } = require('./_supabase');
 const { jsonResponse, parseJsonBody, getPathId, makeId } = require('./_utils');
+const { validateAuth } = require('./_auth');
+const { sanitizeString, sanitizeNumber } = require('./_validation');
 
 exports.handler = async (event) => {
+  // Validar autenticación
+  const authResult = await validateAuth(event);
+  if (!authResult.valid) {
+    return jsonResponse(401, { error: 'No autorizado', message: authResult.error });
+  }
+
   const supabase = getSupabaseClient();
   const method = event.httpMethod;
   const id = getPathId(event, 'prestamos');
@@ -18,9 +26,9 @@ exports.handler = async (event) => {
       const now = new Date().toISOString();
       const record = {
         id: makeId(),
-        cliente: payload.cliente || '',
-        monto_prestado: payload.montoPrestado || 0,
-        estado: payload.estado || 'activo',
+        cliente: sanitizeString(payload.cliente || '', 200),
+        monto_prestado: sanitizeNumber(payload.montoPrestado || 0, 0, 999999999),
+        estado: sanitizeString(payload.estado || 'activo', 50),
         created_at: now,
         updated_at: now
       };
@@ -56,6 +64,7 @@ exports.handler = async (event) => {
 
     return jsonResponse(405, { error: 'Metodo no permitido.' });
   } catch (err) {
-    return jsonResponse(500, { error: err.message || 'Error en prestamos.' });
+    console.error('Error en prestamos:', err);
+    return jsonResponse(500, { error: 'Error al procesar la solicitud.' });
   }
 };

@@ -65,9 +65,20 @@ function buildInconsistencySummary(items, label) {
 
 function renderInconsistencies() {
     if (!inconsistencyList) return;
-    const lima = JSON.parse(localStorage.getItem('quickReceiptsLima') || '[]');
-    const provincia = JSON.parse(localStorage.getItem('quickReceiptsProvincia') || '[]');
-    const caja = JSON.parse(localStorage.getItem('quickReceiptsCaja') || '[]');
+    // Función helper para parsear de forma segura
+    const safeParse = (key) => {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : [];
+        } catch (err) {
+            console.error(`Error al parsear ${key}:`, err);
+            localStorage.removeItem(key);
+            return [];
+        }
+    };
+    const lima = safeParse('quickReceiptsLima');
+    const provincia = safeParse('quickReceiptsProvincia');
+    const caja = safeParse('quickReceiptsCaja');
 
     const summaries = [
         buildInconsistencySummary(lima, 'Lima'),

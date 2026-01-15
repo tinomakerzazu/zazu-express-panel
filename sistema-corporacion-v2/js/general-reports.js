@@ -84,7 +84,18 @@ async function syncReportsFromSupabase() {
             .order('created_at', { ascending: false });
         if (error) return;
         const items = (data || []).map(mapSupabaseRow);
-        const localItems = JSON.parse(localStorage.getItem(entry.key) || '[]');
+        // Parsear con manejo de errores
+        const safeParse = (key) => {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : [];
+            } catch (err) {
+                console.error(`Error al parsear ${key}:`, err);
+                localStorage.removeItem(key);
+                return [];
+            }
+        };
+        const localItems = safeParse(entry.key);
         const merged = mergeSupabaseWithLocal(items, localItems);
         localStorage.setItem(entry.key, JSON.stringify(merged));
     }));
@@ -96,9 +107,20 @@ function buildGeneralReports() {
     if (!zoneBody || !cajaBody) return;
 
     const range = getDateRange();
-    const limaAll = JSON.parse(localStorage.getItem('quickReceiptsLima') || '[]');
-    const provinciaAll = JSON.parse(localStorage.getItem('quickReceiptsProvincia') || '[]');
-    const cajaAll = JSON.parse(localStorage.getItem('quickReceiptsCaja') || '[]');
+    // Parsear con manejo de errores
+    const safeParse = (key) => {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : [];
+        } catch (err) {
+            console.error(`Error al parsear ${key}:`, err);
+            localStorage.removeItem(key);
+            return [];
+        }
+    };
+    const limaAll = safeParse('quickReceiptsLima');
+    const provinciaAll = safeParse('quickReceiptsProvincia');
+    const cajaAll = safeParse('quickReceiptsCaja');
 
     const lima = limaAll.filter((item) => isWithinRange(item, range));
     const provincia = provinciaAll.filter((item) => isWithinRange(item, range));

@@ -1,7 +1,18 @@
-﻿const { getSupabaseClient, getBucketName } = require('./_supabase');
+const { getSupabaseClient, getBucketName } = require('./_supabase');
 const { jsonResponse, parseJsonBody, getPathId, makeId, parseDataUrl, getExtensionFromType } = require('./_utils');
+const { validateAuth } = require('./_auth');
+const { sanitizeString, sanitizeNumber, isValidAmount } = require('./_validation');
+
+// Tamaño máximo de archivo: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 exports.handler = async (event) => {
+  // Validar autenticación
+  const authResult = await validateAuth(event);
+  if (!authResult.valid) {
+    return jsonResponse(401, { error: 'No autorizado', message: authResult.error });
+  }
+
   const supabase = getSupabaseClient();
   const bucket = getBucketName();
   const method = event.httpMethod;
@@ -37,13 +48,29 @@ exports.handler = async (event) => {
         return jsonResponse(400, { error: 'Faltan campos obligatorios.' });
       }
 
+      // Validar monto
+      if (!isValidAmount(payload.monto, 0, 999999999)) {
+        return jsonResponse(400, { error: 'Monto inválido.' });
+      }
+
       let comprobanteUrl = null;
       let comprobanteName = null;
 
       if (payload.comprobanteBase64) {
+        // Validar tamaño del archivo
+        const base64Size = (payload.comprobanteBase64.length * 3) / 4;
+        if (base64Size > MAX_FILE_SIZE) {
+          return jsonResponse(400, { error: `El archivo excede el tamaño máximo de ${MAX_FILE_SIZE / 1024 / 1024}MB.` });
+        }
+
         const parsed = parseDataUrl(payload.comprobanteBase64);
         if (!parsed) {
           return jsonResponse(400, { error: 'Comprobante invalido.' });
+        }
+
+        // Validar tamaño del buffer
+        if (parsed.buffer && parsed.buffer.length > MAX_FILE_SIZE) {
+          return jsonResponse(400, { error: `El archivo excede el tamaño máximo de ${MAX_FILE_SIZE / 1024 / 1024}MB.` });
         }
 
         const ext = payload.comprobanteName
@@ -69,14 +96,14 @@ exports.handler = async (event) => {
       const now = new Date().toISOString();
       const record = {
         id: makeId(),
-        cliente: payload.cliente,
-        cliente_id: payload.clienteId || null,
-        monto: Number(payload.monto) || 0,
-        fecha: payload.fecha,
-        metodo: payload.metodo,
-        referencia: payload.referencia || '',
-        estado: payload.estado || 'Registrado',
-        nota: payload.nota || '',
+        cliente: sanitizeString(payload.cliente, 200),
+        cliente_id: payload.clienteId ? sanitizeString(payload.clienteId, 100) : null,
+        monto: sanitizeNumber(payload.monto, 0, 999999999),
+        fecha: payload.fecha, // Ya validado por Supabase
+        metodo: sanitizeString(payload.metodo, 50),
+        referencia: sanitizeString(payload.referencia || '', 200),
+        estado: sanitizeString(payload.estado || 'Registrado', 50),
+        nota: sanitizeString(payload.nota || '', 2000),
         comprobante_url: comprobanteUrl,
         comprobante_name: comprobanteName,
         created_at: now,
@@ -145,6 +172,8 @@ exports.handler = async (event) => {
 
     return jsonResponse(405, { error: 'Metodo no permitido.' });
   } catch (err) {
-    return jsonResponse(500, { error: err.message || 'Error en pagos.' });
+    // No exponer detalles del error en producción
+    console.error('Error en pagos:', err);
+    return jsonResponse(500, { error: 'Error al procesar la solicitud.' });
   }
 };

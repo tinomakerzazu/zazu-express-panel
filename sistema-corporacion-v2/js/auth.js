@@ -39,9 +39,21 @@ if (loginForm) {
         if (!username) {
             if (usernameInput) usernameInput.classList.add('is-invalid');
             hasError = true;
+        } else if (typeof isValidEmail === 'function' && !isValidEmail(username)) {
+            if (usernameInput) {
+                usernameInput.classList.add('is-invalid');
+                usernameInput.setAttribute('title', 'Ingresa un email válido');
+            }
+            hasError = true;
         }
         if (!password) {
             if (passwordInput) passwordInput.classList.add('is-invalid');
+            hasError = true;
+        } else if (password.length < 6) {
+            if (passwordInput) {
+                passwordInput.classList.add('is-invalid');
+                passwordInput.setAttribute('title', 'La contraseña debe tener al menos 6 caracteres');
+            }
             hasError = true;
         }
         if (hasError) {
