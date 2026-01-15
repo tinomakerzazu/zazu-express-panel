@@ -524,39 +524,261 @@ function exportPDF(zone) {
     const rows = applyFilters(zone, items);
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write('<html><head><title>Comprobantes</title></head><body>');
-    win.document.write(`<h2>Comprobantes ${zone}</h2>`);
-    win.document.write('<table border="1" cellspacing="0" cellpadding="6">');
+    
+    // Calcular totales
+    const totalMonto = rows.reduce((sum, item) => {
+        const monto = parseFloat(item.monto) || 0;
+        return sum + monto;
+    }, 0);
+    
+    // Formatear nombres de zona
+    const zoneNames = {
+        lima: 'Lima',
+        provincia: 'Provincia',
+        caja: 'Caja Efectivo'
+    };
+    const zoneName = zoneNames[zone] || zone;
+    
+    // Fecha de generación
+    const now = new Date();
+    const fechaGeneracion = now.toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Estilos profesionales
+    const styles = `
+        <style>
+            @page {
+                margin: 2cm;
+                size: A4;
+            }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: 'Arial', 'Helvetica', sans-serif;
+                font-size: 11pt;
+                line-height: 1.6;
+                color: #333;
+                background: #fff;
+            }
+            .header {
+                border-bottom: 3px solid #6d2932;
+                padding-bottom: 15px;
+                margin-bottom: 25px;
+            }
+            .header h1 {
+                color: #6d2932;
+                font-size: 24pt;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .header .subtitle {
+                color: #666;
+                font-size: 12pt;
+                margin-bottom: 10px;
+            }
+            .header .meta {
+                color: #888;
+                font-size: 10pt;
+                display: flex;
+                justify-content: space-between;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                page-break-inside: auto;
+            }
+            thead {
+                background: #6d2932;
+                color: #fff;
+            }
+            th {
+                padding: 12px 8px;
+                text-align: left;
+                font-weight: bold;
+                font-size: 10pt;
+                border: 1px solid #5a2027;
+            }
+            tbody tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            tbody tr:nth-child(even) {
+                background: #f9f9f9;
+            }
+            tbody tr:hover {
+                background: #f0f0f0;
+            }
+            td {
+                padding: 10px 8px;
+                border: 1px solid #ddd;
+                font-size: 10pt;
+            }
+            .total-row {
+                background: #6d2932 !important;
+                color: #fff;
+                font-weight: bold;
+            }
+            .total-row td {
+                border: 1px solid #5a2027;
+                padding: 12px 8px;
+                font-size: 11pt;
+            }
+            .footer {
+                margin-top: 30px;
+                padding-top: 15px;
+                border-top: 2px solid #ddd;
+                text-align: center;
+                color: #666;
+                font-size: 9pt;
+            }
+            .stats {
+                display: flex;
+                justify-content: space-around;
+                margin: 20px 0;
+                padding: 15px;
+                background: #f5f5f5;
+                border-radius: 5px;
+            }
+            .stat-item {
+                text-align: center;
+            }
+            .stat-label {
+                font-size: 9pt;
+                color: #666;
+                margin-bottom: 5px;
+            }
+            .stat-value {
+                font-size: 14pt;
+                font-weight: bold;
+                color: #6d2932;
+            }
+        </style>
+    `;
+    
+    // HTML del documento
+    let html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Reporte de Comprobantes - ${zoneName}</title>
+            ${styles}
+        </head>
+        <body>
+            <div class="header">
+                <h1>Reporte de Comprobantes</h1>
+                <div class="subtitle">Zona: ${zoneName}</div>
+                <div class="meta">
+                    <span>Generado: ${fechaGeneracion}</span>
+                    <span>Total de registros: ${rows.length}</span>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Total de Registros</div>
+                    <div class="stat-value">${rows.length}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Monto Total</div>
+                    <div class="stat-value">S/ ${totalMonto.toFixed(2)}</div>
+                </div>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+    `;
+    
     if (zone === 'caja') {
-        win.document.write('<tr><th>Fecha</th><th>Hora</th><th>Caja</th><th>Tipo</th><th>Monto</th><th>Concepto</th></tr>');
+        html += `
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Caja</th>
+                        <th>Tipo</th>
+                        <th style="text-align: right;">Monto</th>
+                        <th>Concepto</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
         rows.forEach((item) => {
-            win.document.write(`<tr>
-                <td>${item.fecha || ''}</td>
-                <td>${item.hora || ''}</td>
-                <td>${item.caja || ''}</td>
-                <td>${item.tipo || ''}</td>
-                <td>${item.monto || ''}</td>
-                <td>${item.concepto || ''}</td>
-            </tr>`);
+            const monto = parseFloat(item.monto) || 0;
+            html += `
+                    <tr>
+                        <td>${item.fecha || '-'}</td>
+                        <td>${item.hora || '-'}</td>
+                        <td>${item.caja || '-'}</td>
+                        <td>${item.tipo || '-'}</td>
+                        <td style="text-align: right;">S/ ${monto.toFixed(2)}</td>
+                        <td>${item.concepto || '-'}</td>
+                    </tr>
+            `;
         });
     } else {
-        win.document.write('<tr><th>Fecha</th><th>Hora</th><th>Metodo</th><th>Numero</th><th>Monto</th><th>Operacion</th><th>Destinatario</th></tr>');
+        html += `
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Método</th>
+                        <th>Número</th>
+                        <th style="text-align: right;">Monto</th>
+                        <th>Operación</th>
+                        <th>Destinatario</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
         rows.forEach((item) => {
-            win.document.write(`<tr>
-            <td>${item.fecha || ''}</td>
-            <td>${item.hora || ''}</td>
-            <td>${item.metodo || ''}</td>
-            <td>${item.numero || ''}</td>
-            <td>${item.monto || ''}</td>
-            <td>${item.operacion || ''}</td>
-            <td>${item.destinatario || ''}</td>
-        </tr>`);
+            const monto = parseFloat(item.monto) || 0;
+            html += `
+                    <tr>
+                        <td>${item.fecha || '-'}</td>
+                        <td>${item.hora || '-'}</td>
+                        <td>${item.metodo || '-'}</td>
+                        <td>${item.numero || '-'}</td>
+                        <td style="text-align: right;">S/ ${monto.toFixed(2)}</td>
+                        <td>${item.operacion || '-'}</td>
+                        <td>${item.destinatario || '-'}</td>
+                    </tr>
+            `;
         });
     }
-    win.document.write('</table></body></html>');
+    
+    // Fila de totales
+    html += `
+                    <tr class="total-row">
+                        <td colspan="${zone === 'caja' ? '4' : '4'}" style="text-align: right; font-size: 11pt;">TOTAL:</td>
+                        <td style="text-align: right; font-size: 11pt;">S/ ${totalMonto.toFixed(2)}</td>
+                        <td colspan="${zone === 'caja' ? '1' : '2'}"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="footer">
+                <p>Zazu Express - Sistema de Gestión de Comprobantes</p>
+                <p>Este documento fue generado el ${fechaGeneracion}</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    win.document.write(html);
     win.document.close();
     win.focus();
-    win.print();
+    
+    // Pequeño delay para asegurar que el contenido se cargue antes de imprimir
+    setTimeout(() => {
+        win.print();
+    }, 250);
 }
 
 function bindExportButtons() {
